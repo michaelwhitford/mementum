@@ -1,4 +1,4 @@
-# MEMENTUM — git⊗φ memory
+# MEMENTUM — git memory
 
 ## Nucleus
 
