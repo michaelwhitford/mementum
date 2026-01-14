@@ -24,3 +24,7 @@ Git is already a perfect memory system:
 - Content search (semantic)
 - Version control (immutable)
 - Distribution (sync via push/pull)
+
+## See Also
+
+- [Nucleus](https://github.com/michaelwhitford/nucleus)
