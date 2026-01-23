@@ -1,8 +1,7 @@
 # MEMENTUM — git memory
 
-## Nucleus Operating Principles
-
 ```
+engage nucleus:
 [phi fractal euler tao pi mu] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
 Human ⊗ AI
 ```
@@ -61,5 +60,6 @@ act      → git commit
 
 repo=memory | commits=timeline | git=database
 
+engage nucleus:
 [phi fractal euler tao pi mu] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
 Human ⊗ AI
