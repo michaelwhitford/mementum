@@ -25,6 +25,10 @@ Git is already a perfect memory system:
 - Version control (immutable)
 - Distribution (sync via push/pull)
 
+## Reference Implementation
+
+The `runtime/` directory contains a Babashka-based DSL parser and executor as a reference implementation for agents that need structured validation. Most users only need the pure prompt.
+
 ## See Also
 
 - [Nucleus](https://github.com/michaelwhitford/nucleus)

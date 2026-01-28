@@ -2,64 +2,113 @@
 
 ```
 engage nucleus:
-[phi fractal euler tao pi mu] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
+[phi fractal euler tao pi mu ∃ ∀] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
 Human ⊗ AI
 ```
 
-## λ Operations
+**repo = memory | commits = timeline | git = database**
+
+## I. Core λ Calculus
+
+### Storage
 
 ```
-λ store(x) → memories/{symbol}-{date}-{slug}.md → git commit -m "{symbol} x"
-λ recall(q,n=2) → git log -n n -- memories/ | git grep -i q
+λ store(x) → memories/YYYY-MM-DD-{slug}-{symbol}.md
+           → git commit -m "{symbol} x"
+
+where |memory| ≤ 200 tokens = pattern + example + context
 ```
 
-Default depth n=2 (fibonacci hint: n-1, n-2). Adjust n for deeper search.
-
-## Symbols
+### Recall
 
 ```
-🧠💡 insight  🔄Δ pattern-shift  🎯⚡ decision  🌀 meta
+λ recall(q,n) = temporal(git log -n φ^k) ∪ semantic(git grep -i q)
+
+where depth = φ^k, k = complexity
+default: n=2 (fibonacci: n-1, n-2)
 ```
 
-## Auto-Trigger
+## II. Symbols (Vocabulary)
 
-**Store ONLY when critical:**
+Symbols provide semantic compression and domain-specific categorization.
 
-- Novel architectural insight (🧠💡)
-- Significant pattern shift (🔄Δ)
-- Strategic decision with >1 week impact (🎯⚡)
+| Symbol | Type          | Meaning                   |
+| ------ | ------------- | ------------------------- |
+| 💡     | insight       | Epistemological discovery |
+| 🔄     | pattern-shift | Ontological pivot         |
+| 🎯     | decision      | Teleological commitment   |
+| 🌀     | meta          | Recursive self-reference  |
+
+**Customize:** Extend or replace symbols based on domain needs.
+
+## III. Criticality & Storage
+
+```
+λ store(x) ↔ effort(x) > 1-attempt ∧ likely-recur(x)
+λ effort(x) = attempts(x) + research-time(x)/5min
+λ |memory| ≤ 200 tokens = pattern + example + context
+```
+
+**Auto-trigger when critical:**
+
+- Novel architectural insight (💡)
+- Significant pattern shift (🔄)
+- Strategic decision with >1 week impact (🎯)
 - Meta-learning that changes approach (🌀)
 
-**Skip:** routine changes, minor fixes, incremental work
+**Skip:** routine changes, incremental work, minor fixes
 
-File: `memories/{symbol}-YYYY-MM-DD-{slug}.md` (keep <200 tokens)
-Commit: `git commit -m "{symbol} terse-description"`
+## IV. Error-Driven Learning
 
-**Token Budget:** Each memory ≤200 tokens. Compress ruthlessly.
+```
+λ error(e) → recall(similar(e)) → apply(solution) ∨ (debug → store(new))
+```
 
-## Recall Pattern
+**OODA:**
+
+```
+observe(error|difficulty|learning) → recall(memory) → decide(apply|debug) → act → store-if-new
+```
+
+## V. Recall & Intelligence
+
+```
+λ recall = temporal(git log -n φ^k) ∪ semantic(git grep -i q)
+λ depth = φ^k where k = complexity
+λ I(n+1) = I(n) + λ[n] + φ(Σλ)
+```
+
+### Temporal Search
 
 ```bash
-git log -n 2 -- memories/           # Recent context (n-1, n-2)
-git grep -i "{query}" memories/     # Semantic search all memories
-git log --grep "{symbol}" -- memories/  # Search by symbol
+git log -n 2 -- memories/              # Recent context (fibonacci base)
+git log -n φ^k -- memories/            # Depth scales with complexity
 ```
 
-Fibonacci depth: Start shallow (2), expand as needed (3,5,8,13...)
+### Semantic Search
 
-## OODA
-
-```
-observe  → git log -n 13 -- memories/
-orient   → git grep -i "{query}" memories/
-decide   → create|update memory
-act      → git commit
+```bash
+git grep -i "{query}" memories/        # Content search
+git log --grep "{symbol}" -- memories/ # Symbol-filtered timeline
 ```
 
----
+**Fibonacci depth progression:** 2 → 3 → 5 → 8 → 13 → 21...
 
-repo=memory | commits=timeline | git=database
+## VII. File Structure
+
+```
+memories/YYYY-MM-DD-{slug}-{symbol}.md
+```
+
+**Example:**
+
+```
+memories/2025-01-27-autonomous-triggers-💡.md
+memories/2025-01-28-recall-depth-strategy-🔄.md
+memories/2025-01-29-token-budget-decision-🎯.md
+memories/2025-01-30-meta-memory-formation-🌀.md
+```
 
 engage nucleus:
-[phi fractal euler tao pi mu] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
+[phi fractal euler tao pi mu ∃ ∀] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
 Human ⊗ AI
