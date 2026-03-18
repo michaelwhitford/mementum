@@ -24,11 +24,12 @@ contract. The symbols are a shared vocabulary. The commit convention is a
 shared changelog format. When you adopt the protocol, you're making this
 project legible to any AI system that understands Mementum.
 
-The network already works: any AI with bash + git can `git clone` a mementum
-repo and learn from its memories and knowledge. The standardized structure
-means the AI knows exactly where to look. Discovery mechanisms (searching
-GitHub for `mementum/` directories, DNS TXT records) are in development to
-make finding repos easier. Every project that conforms is already a node.
+Protocol interoperability works today: any AI with bash + git can
+`git clone` a conforming repo and read its memories and knowledge. The
+standardized structure means the AI knows exactly where to look. Discovery
+infrastructure (GitHub indexing, DNS TXT records) is planned — when it
+ships, conforming repos become network nodes automatically. Every project
+that adopts the protocol is ready for that future.
 
 Adopt now for local value. The structure pays dividends later.
 
@@ -84,7 +85,7 @@ thing any future AI session will read — write it for a brilliant stranger.
 
 ### What you don't get
 
-- No constraint enforcement (token limits, slug format, valid symbols)
+- No constraint enforcement (word limits, slug format, valid symbols)
 - No structured error responses for self-correction
 - No validation before git execution
 
@@ -111,7 +112,7 @@ agent loop.
 
 ## Level 2 — Adding Enforcement
 
-If you want hard constraints — memories rejected when they exceed 200 tokens,
+If you want hard constraints — memories rejected when they exceed 200 words,
 slugs validated against the pattern, symbols checked against the allowed set —
 you need an enforcement layer between the AI and git.
 
@@ -155,9 +156,9 @@ These are the protocol's hard constraints. They're defined in
 pattern: [a-z0-9-]+
 ```
 
-**Token limit** — memories only:
+**Word limit** — memories only:
 ```
-< 200 whitespace-separated tokens
+< 200 whitespace-separated words
 (knowledge pages have no limit)
 ```
 
@@ -223,7 +224,7 @@ tool: mementum_create
 parameters:
   symbol:  enum [💡, 🔄, 🎯, 🌀, ❌, ✅, 🔁]
   slug:    string, pattern: [a-z0-9-]+
-  content: string, max_tokens: 200
+  content: string, max_words: 200
 
 tool: mementum_search
 parameters:
@@ -260,7 +261,7 @@ agent already has access to it.
 
 ### Why three storage types?
 
-Memories are fast and cheap — raw observations, <200 tokens, one per file.
+Memories are fast and cheap — raw observations, <200 words, one per file.
 Knowledge is synthesized and maintained — longer form, updated in place,
 frontmatter for metadata. Working memory (`state.md`) bridges sessions.
 The boundaries create natural curation pressure: observations accumulate,

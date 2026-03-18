@@ -10,17 +10,18 @@ Zero dependencies. No runtime required.
 Mementum defines how AI agents store, recall, and synthesize knowledge
 across session boundaries using git as the memory substrate.
 
-- **Three storage types** — working memory (`state.md`), memories (raw observations, <200 tokens), and knowledge (synthesized documentation)
+- **Three storage types** — working memory (`state.md`), memories (raw observations, <200 words), and knowledge (synthesized documentation)
 - **Six operations** — create, update, delete, search, read, synthesize
 - **Human governance** — AI proposes, human approves, AI commits
 - **Git-native** — `git log` for temporal search, `git grep` for semantic search, commit history for immutability
 
 Every adopting project uses the same structure — same directory layout, same
 symbols, same commit convention. This makes any Mementum project immediately
-legible to any other mementum AI system. The network already works: any AI
-with bash + git can clone a mementum repo and learn from its memories and
-knowledge. The more projects that adopt the protocol, the more every AI
-system can learn from.
+legible to any AI that understands the protocol. Any AI with bash + git can
+clone a conforming repo and read its memories and knowledge — protocol
+interoperability works today. Discovery infrastructure (finding repos across
+GitHub, DNS-based lookup) is planned; when it ships, conforming repos become
+network nodes automatically.
 
 ## Documents
 
@@ -45,7 +46,7 @@ enforcement.
 ## Reference Implementation
 
 The `runtime/` directory contains a Babashka-based implementation that
-demonstrates constraint enforcement — token limits, symbol validation,
+demonstrates constraint enforcement — word limits, symbol validation,
 structured error responses. It's a reference for modeling enforcement
 in your own system, not a runtime dependency. See [INTEGRATING.md](INTEGRATING.md)
 for how to use it as a blueprint.

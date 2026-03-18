@@ -2,7 +2,7 @@
 
 ## Now
 
-Dialectic complete. All findings addressed. Ready to release.
+Security hardening and self-improvement audit complete. Ready to release.
 
 ## Next
 
@@ -16,19 +16,19 @@ Nothing.
 
 ## Recent
 
-- ✅ Dialectic evaluation — recall completeness, approval gate, network claims addressed
-- ✅ 27-finding audit complete — all inconsistencies and gaps resolved
-- 🔄 tiers→types — purged tier-1/tier-2 hierarchy language across all 10 files
-- 🔄 ≤200→<200 — standardized token limit symbol for smaller model compatibility
-- 🔄 🗑️→❌ — delete commits use standard symbol, eliminated undocumented 🗑️
-- 🔄 Lambda alignment — approval/both_gates/≥3 threshold standardized across specs
-- 🔄 view→read rename — CRUD convention across grammar, runtime, tests, README
-- 🔄 Symbols added to memory content — enables content-based filtering via grep
-- 🔄 Memories curated — 3 stale observations updated to current understanding
-- ✅ Runtime updated — paths, filenames, 7 symbols, Unicode emoji tokenizer, all storage types
-- ✅ Tests updated — 305 unit assertions + 28 integration tests, all passing
-- 🔄 GRAMMAR.md rewritten — aligned with current protocol
-- 🔄 Store expanded — create + update + delete as full lifecycle
-- 🔄 Append-only removed — files are mutable, git preserves history
-- 🔄 Protocol update — MEMENTUM.md rewritten (three storage types, three ops, knowledge pages)
-- ✅ MEMENTUM-LAMBDA.md created — compact lambda-only prompt
+- ✅ Security audit — 22 findings, 3 CRITICAL, 6 HIGH, 7 MEDIUM, 6 LOW
+- ✅ Shell injection eliminated — babashka.process/shell replaces bash -c across all executors
+- ✅ Heredoc eliminated — spit/slurp for all file I/O, no shell involvement
+- ✅ Path traversal guard — safe-path? validates canonical path within working directory
+- ✅ exec-diff now surfaces git errors (was silently returning success)
+- ✅ resolve-ref returns ambiguous-ref error on multi-file commits
+- 🔄 Network claim softened — "protocol interoperability works today" replaces "network already works"
+- 🔄 (list) now includes knowledge pages alongside memories
+- 🔄 BNF grammar updated to match tokenizer reality
+- 🔄 MEMENTUM-LAMBDA.md — added knowledge commit convention, read/history ops
+- 🔄 tokens→words — all docs now say "words" (whitespace-separated) not "tokens"
+- 🔄 Bash examples fixed — symbol prefix in content, safe write patterns
+- ✅ Concurrency section added to MEMENTUM.md (§XI)
+- ✅ git-repo guard at startup — clear error when not in a git repo
+- ✅ Idempotent updates — nothing-to-commit treated as no-op success
+- ✅ All tests passing — 309 unit assertions + 37 integration tests

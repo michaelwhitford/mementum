@@ -52,7 +52,7 @@ EOF
 # Seed: memories with different symbols for list/search tests
 echo '💡 Git provides perfect memory substrate: temporal graph, semantic search, immutability, distribution.' > mementum/memories/git-as-memory.md
 echo '🔄 Fibonacci recall depths work better than linear scaling for memory search.' > mementum/memories/fibonacci-recall.md
-echo '🎯 Limit memories to fewer than 200 tokens. Forces distillation.' > mementum/memories/token-limit.md
+echo '🎯 Limit memories to fewer than 200 words. Forces distillation.' > mementum/memories/word-limit.md
 echo '🌀 OODA loop integration enables observe-orient-decide-act memory cycles.' > mementum/memories/ooda-loop.md
 echo '❌ Shell injection via string interpolation. Fixed with heredoc.' > mementum/memories/shell-injection.md
 echo '✅ All tests passing after runtime alignment.' > mementum/memories/tests-passing.md
@@ -134,7 +134,7 @@ run_test "History knowledge" "$TOOL '(history \"mementum/knowledge/\" 3)'"
 
 echo "=== DIFF Operations ==="
 run_test "Diff HEAD~1 to HEAD" "$TOOL '(diff)'"
-run_test "Diff HEAD~3 to HEAD" "$TOOL '(diff \"HEAD~3\" \"HEAD\")'"
+run_test "Diff HEAD~2 to HEAD" "$TOOL '(diff \"HEAD~2\" \"HEAD\")'"
 
 echo "=== CREATE / UPDATE / DELETE Lifecycle ==="
 run_test "Create a test memory" "$TOOL '(create 💡 \"integration-test-fixture\" \"This is a test memory for integration testing.\")'"

@@ -7,7 +7,7 @@ at this code and tell it to integrate with your project.
 ## Features
 
 - ✅ **S-expression parser** — tokenizes and parses MEMENTUM DSL with full Unicode support
-- ✅ **Constraint validation** — enforces symbols, slugs, token limits, fibonacci depths
+- ✅ **Constraint validation** — enforces symbols, slugs, word limits, fibonacci depths
 - ✅ **All storage types** — operates across `mementum/memories/`, `mementum/knowledge/`, and `mementum/state.md`
 - ✅ **Git execution** — safe execution of git commands
 - ✅ **Structured errors** — self-correcting feedback for AI agents
@@ -153,7 +153,7 @@ Three modes: no args (all memories), symbol (grep content), path (ls directory).
 Lowercase letters, numbers, hyphens: `[a-z0-9-]+`
 
 ### Content
-Memories: < 200 whitespace-separated tokens. Knowledge pages: no limit.
+Memories: < 200 whitespace-separated words. Knowledge pages: no limit.
 
 ### Fibonacci Depths
 `1, 2, 3, 5, 8, 13, 21, 34` — used in SEARCH and HISTORY.

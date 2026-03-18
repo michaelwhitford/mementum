@@ -6,7 +6,7 @@
 
 (require '[clojure.string :as str]
          '[clojure.java.io :as io]
-         '[clojure.java.shell :as shell]
+         '[babashka.process :as proc]
          '[clojure.pprint :refer [pprint]])
 
 ;; ============================================================================
@@ -31,14 +31,17 @@
   (count (re-seq #"\S+" s)))
 
 (defn valid-content?
-  "Check if content is under 200 tokens"
+  "Check if content is under 200 words (whitespace-separated)"
   [s]
   (< (token-count s) 200))
 
-(defn run-command
-  "Execute shell command and return result"
-  [cmd]
-  (let [result (shell/sh "bash" "-c" cmd)]
+(defn run-git
+  "Execute git command with array args — no shell interpolation.
+   Each argument is passed directly to the process; shell metacharacters
+   (;, |, $, `, &&) are never interpreted."
+  [& args]
+  (let [result (apply proc/shell {:out :string :err :string :continue true}
+                      "git" args)]
     (if (zero? (:exit result))
       {:success true
        :stdout (str/trim (:out result))
@@ -47,6 +50,42 @@
        :stdout (str/trim (:out result))
        :stderr (str/trim (:err result))
        :exit (:exit result)})))
+
+(defn run-grep
+  "Execute grep with array args — no shell interpolation."
+  [& args]
+  (let [result (apply proc/shell {:out :string :err :string :continue true}
+                      "grep" args)]
+    (if (zero? (:exit result))
+      {:success true
+       :stdout (str/trim (:out result))
+       :stderr (str/trim (:err result))}
+      {:success false
+       :stdout (str/trim (:out result))
+       :stderr (str/trim (:err result))
+       :exit (:exit result)})))
+
+(defn safe-path?
+  "Validate that a file path resolves within the current working directory.
+   Prevents path traversal attacks (e.g. mementum/../../etc/passwd)."
+  [path]
+  (let [cwd (.getCanonicalPath (io/file "."))
+        resolved (.getCanonicalPath (io/file path))]
+    (str/starts-with? resolved cwd)))
+
+(defn list-dir
+  "List directory contents sorted by modification time, newest first.
+   Excludes hidden files (dotfiles). Returns newline-separated filenames,
+   or empty string if dir doesn't exist."
+  [dir-path]
+  (let [dir (io/file dir-path)]
+    (if (.isDirectory dir)
+      (->> (.listFiles dir)
+           (remove #(str/starts-with? (.getName %) "."))
+           (sort-by #(- (.lastModified %)))
+           (map #(.getName %))
+           (str/join "\n"))
+      "")))
 
 ;; ============================================================================
 ;; Tokenizer
@@ -296,7 +335,7 @@
     {:error "constraint-violation"
      :field :content
      :value (str (token-count (nth args 2)) " tokens")
-     :expected "< 200 tokens"
+     :expected "< 200 words"
      :suggestion "Reduce content length"}
     
     :else
@@ -322,10 +361,10 @@
      :ref (first args)}))
 
 (defn- memory-ref?
-  "Check if a reference points to a memory (subject to token limit)"
+  "Check if a reference points to a memory (subject to word limit)"
   [ref]
   (or (str/starts-with? ref "mementum/memories/")
-      ;; Git refs (HEAD, hashes) are ambiguous — apply token limit conservatively
+      ;; Git refs (HEAD, hashes) are ambiguous — apply word limit conservatively
       (not (str/starts-with? ref "mementum/knowledge/"))))
 
 (defn validate-update
@@ -354,7 +393,7 @@
     {:error "constraint-violation"
      :field :content
      :value (str (token-count (second args)) " tokens")
-     :expected "< 200 tokens (memories only)"
+     :expected "< 200 words (memories only)"
      :suggestion "Reduce content length, or use a knowledge page for longer content"}
     
     :else
@@ -430,7 +469,7 @@
    Accepts emoji (symbol filter via content grep) or string (path filter)."
   [args]
   (cond
-    ;; No args — list all memories
+    ;; No args — list all memories and knowledge
     (empty? args)
     {:valid true
      :filter-type :default}
@@ -491,124 +530,179 @@
 (defn resolve-ref
   "Resolve git reference to file path.
    If ref is already a mementum/ path, use it directly.
-   Otherwise resolve via git show against memories and knowledge."
+   Otherwise resolve via git show against memories and knowledge.
+   Returns {:file path} on success, {:error ...} on failure or ambiguity."
   [ref]
   (if (str/starts-with? ref "mementum/")
-    ref
-    (let [result (run-command (str "git show " ref " --name-only 2>/dev/null | grep -E 'mementum/(memories|knowledge)/' | head -1"))]
-      (if (and (:success result) (not (str/blank? (:stdout result))))
-        (str/trim (:stdout result))
-        ref))))
+    {:file ref}
+    (let [result (run-git "show" ref "--name-only" "--pretty=format:")]
+      (if (:success result)
+        (let [files (->> (str/split-lines (:stdout result))
+                         (filter #(re-matches #"mementum/(memories|knowledge)/.*" %))
+                         (remove str/blank?))]
+          (case (count files)
+            0 {:error "no-mementum-file"
+               :suggestion (str "Commit " ref " does not contain a mementum file")}
+            1 {:file (first files)}
+            {:error "ambiguous-ref"
+             :files files
+             :suggestion "Use explicit path like (update \"mementum/memories/slug.md\" ...)"}))
+        {:error "invalid-ref"
+         :suggestion (str "Could not resolve reference: " ref)}))))
 
 (defn exec-search
-  "Execute search operation"
+  "Execute search operation — no shell interpolation"
   [{:keys [query depth]}]
-  (let [log-cmd (str "git log -n " depth " --grep \"" query "\" --pretty=format:\"%h %ad %s\" --date=short -- mementum/memories/ mementum/knowledge/")
-        grep-cmd (str "git grep -i \"" query "\" -- mementum/ || true")
-        log-result (run-command log-cmd)
-        grep-result (run-command grep-cmd)]
+  (let [log-result (run-git "log" (str "-n" depth) (str "--grep=" query)
+                            "--pretty=format:%h %ad %s" "--date=short"
+                            "--" "mementum/memories/" "mementum/knowledge/")
+        grep-result (run-git "grep" "-i" query "--" "mementum/")]
     {:success true
      :result {:temporal (:stdout log-result)
-              :semantic (:stdout grep-result)}
+              :semantic (or (:stdout grep-result) "")}
      :depth depth}))
 
 (defn exec-create
-  "Execute create operation"
+  "Execute create operation — uses spit for file writes, no shell"
   [{:keys [symbol slug content]}]
-  (let [filepath (str "mementum/memories/" slug ".md")
-        file-content (str symbol " " content)
-        create-cmd (str "mkdir -p mementum/memories && "
-                       "cat <<'MEMENTUM_EOF' > " filepath "\n"
-                       file-content "\n"
-                       "MEMENTUM_EOF\n"
-                       "git add " filepath " && "
-                       "git commit -m \"" symbol " " slug "\"")]
-    (let [result (run-command create-cmd)]
-      (if (:success result)
-        {:success true
-         :file filepath
-         :commit (str/trim (first (str/split (:stdout result) #"\s")))}
+  (let [dir "mementum/memories"
+        filepath (str dir "/" slug ".md")
+        file-content (str symbol " " content)]
+    (.mkdirs (io/file dir))
+    (spit filepath file-content)
+    (let [add-result (run-git "add" filepath)]
+      (if (:success add-result)
+        (let [commit-result (run-git "commit" "-m" (str symbol " " slug))]
+          (if (:success commit-result)
+            {:success true
+             :file filepath
+             :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+            {:success false
+             :error "git-error"
+             :stderr (:stderr commit-result)
+             :suggestion "Check if git repo is initialized"}))
         {:success false
          :error "git-error"
-         :command create-cmd
-         :stderr (:stderr result)
+         :stderr (:stderr add-result)
          :suggestion "Check if git repo is initialized"}))))
 
 (defn exec-read
-  "Execute read operation"
+  "Execute read operation — uses slurp for files, run-git for refs.
+   Validates file paths stay within the working directory."
   [{:keys [ref]}]
-  (let [;; If ref is a mementum/ file path, cat it; otherwise use git show
-        cmd (if (str/starts-with? ref "mementum/")
-              (str "cat " ref)
-              (str "git show " ref))
-        result (run-command cmd)]
-    (if (:success result)
-      {:success true
-       :result (:stdout result)
-       :ref ref}
+  (if (str/starts-with? ref "mementum/")
+    ;; File path — use slurp, with path traversal guard
+    (if (not (safe-path? ref))
       {:success false
-       :error "git-error"
-       :command cmd
-       :stderr (:stderr result)
-       :suggestion "Check if reference exists"})))
+       :error "path-traversal"
+       :ref ref
+       :suggestion "Path must resolve within the project directory"}
+      (if (.exists (io/file ref))
+        {:success true
+         :result (str/trim (slurp ref))
+         :ref ref}
+        {:success false
+         :error "file-not-found"
+         :ref ref
+         :suggestion "Check if file exists"}))
+    ;; Git reference — use git show with array args
+    (let [result (run-git "show" ref)]
+      (if (:success result)
+        {:success true
+         :result (:stdout result)
+         :ref ref}
+        {:success false
+         :error "git-error"
+         :ref ref
+         :stderr (:stderr result)
+         :suggestion "Check if reference exists"}))))
 
 (defn exec-update
-  "Execute update operation"
+  "Execute update operation — uses spit for file writes, no shell"
   [{:keys [ref content]}]
-  (let [filepath (resolve-ref ref)]
-    (if (not (.exists (io/file filepath)))
+  (let [resolved (resolve-ref ref)]
+    (if (:error resolved)
       {:success false
-       :error "file-not-found"
-       :file filepath
-       :suggestion "Check the file path — file must exist to update"}
-      (let [update-cmd (str "cat <<'MEMENTUM_EOF' > " filepath "\n"
-                           content "\n"
-                           "MEMENTUM_EOF\n"
-                           "git add " filepath " && "
-                           "git commit -m \"🔄 update: " (last (str/split filepath #"/")) "\"")
-            result (run-command update-cmd)]
-        (if (:success result)
-          {:success true
-           :file filepath
-           :commit (str/trim (first (str/split (:stdout result) #"\s")))}
+       :error (:error resolved)
+       :file ref
+       :suggestion (:suggestion resolved)}
+      (let [filepath (:file resolved)]
+        (if (not (.exists (io/file filepath)))
           {:success false
-           :error "git-error"
-           :command update-cmd
-           :stderr (:stderr result)
-           :suggestion "Check if file exists and content differs from current"})))))
+           :error "file-not-found"
+           :file filepath
+           :suggestion "Check the file path — file must exist to update"}
+          (do
+            (spit filepath content)
+            (let [add-result (run-git "add" filepath)]
+              (if (:success add-result)
+                (let [filename (last (str/split filepath #"/"))
+                      commit-result (run-git "commit" "-m" (str "🔄 update: " filename))]
+                  (if (:success commit-result)
+                    {:success true
+                     :file filepath
+                     :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+                    ;; Idempotent: if content unchanged, treat as successful no-op
+                    (if (str/includes? (str (:stdout commit-result) (:stderr commit-result))
+                                       "nothing to commit")
+                      {:success true
+                       :file filepath
+                       :result "no-op: content unchanged"}
+                      {:success false
+                       :error "git-error"
+                       :stderr (:stderr commit-result)
+                       :suggestion "Check if file exists and content differs from current"})))
+                {:success false
+                 :error "git-error"
+                 :stderr (:stderr add-result)
+                 :suggestion "Check if git repo is initialized"}))))))))
 
 (defn exec-delete
-  "Execute delete operation"
+  "Execute delete operation — uses run-git with array args, no shell"
   [{:keys [ref]}]
-  (let [filepath (resolve-ref ref)]
-    (if (not (.exists (io/file filepath)))
+  (let [resolved (resolve-ref ref)]
+    (if (:error resolved)
       {:success false
-       :error "file-not-found"
-       :file filepath
-       :suggestion "Check the file path — file must exist to delete"}
-      (let [delete-cmd (str "git rm " filepath " && "
-                           "git commit -m \"❌ delete: " (last (str/split filepath #"/")) "\"")
-            result (run-command delete-cmd)]
-        (if (:success result)
-          {:success true
-           :file filepath
-           :commit (str/trim (first (str/split (:stdout result) #"\s")))}
+       :error (:error resolved)
+       :file ref
+       :suggestion (:suggestion resolved)}
+      (let [filepath (:file resolved)]
+        (if (not (.exists (io/file filepath)))
           {:success false
-           :error "git-error"
-           :command delete-cmd
-           :stderr (:stderr result)
-           :suggestion "Check if file exists"})))))
+           :error "file-not-found"
+           :file filepath
+           :suggestion "Check the file path — file must exist to delete"}
+          (let [rm-result (run-git "rm" filepath)]
+            (if (:success rm-result)
+              (let [filename (last (str/split filepath #"/"))
+                    commit-result (run-git "commit" "-m" (str "❌ delete: " filename))]
+                (if (:success commit-result)
+                  {:success true
+                   :file filepath
+                   :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+                  {:success false
+                   :error "git-error"
+                   :stderr (:stderr commit-result)
+                   :suggestion "Check if file exists"}))
+              {:success false
+               :error "git-error"
+               :stderr (:stderr rm-result)
+               :suggestion "Check if file exists"})))))))
 
 (defn exec-history
-  "Execute history operation.
-   Uses --follow for single files, omits it for directories/multi-path."
+  "Execute history operation — uses run-git with array args.
+   Uses --follow for single files, omits it for directories."
   [{:keys [path depth]}]
   (let [use-follow (and (not (str/ends-with? path "/"))
                         (not (str/includes? path " ")))
-        cmd (str "git log -n " depth
-                 (when use-follow " --follow")
-                 " --pretty=format:\"%h %ad %s\" --date=short -- " path)
-        result (run-command cmd)]
+        ;; Build args as a vector, then apply
+        base-args ["log" (str "-n" depth)]
+        follow-args (if use-follow ["--follow"] [])
+        fmt-args ["--pretty=format:%h %ad %s" "--date=short" "--"]
+        ;; Split space-separated paths (e.g. default "mementum/memories/ mementum/knowledge/")
+        path-args (str/split (str/trim path) #"\s+")
+        all-args (concat base-args follow-args fmt-args path-args)
+        result (apply run-git all-args)]
     (if (:success result)
       {:success true
        :result (:stdout result)
@@ -616,35 +710,48 @@
        :depth depth}
       {:success false
        :error "git-error"
-       :command cmd
        :stderr (:stderr result)})))
 
 (defn exec-diff
-  "Execute diff operation across memories and knowledge"
+  "Execute diff operation across memories and knowledge — uses run-git with array args"
   [{:keys [from to]}]
-  (let [cmd (str "git diff " from " " to " -- mementum/memories/ mementum/knowledge/")
-        result (run-command cmd)]
-    {:success true
-     :result (:stdout result)
-     :from from
-     :to to}))
+  (let [result (run-git "diff" from to "--" "mementum/memories/" "mementum/knowledge/")]
+    (if (:success result)
+      {:success true
+       :result (:stdout result)
+       :from from
+       :to to}
+      {:success false
+       :error "git-error"
+       :from from
+       :to to
+       :stderr (:stderr result)
+       :suggestion "Check if git references exist"})))
 
 (defn exec-list
-  "Execute list operation.
+  "Execute list operation — no shell interpolation.
    Supports three modes: default (all memories), symbol (grep content), path (ls directory)."
   [{:keys [filter-type symbol path]}]
-  (let [cmd (case filter-type
-              :symbol (str "grep -rl \"" symbol "\" mementum/memories/ mementum/knowledge/ 2>/dev/null || true")
-              :path   (str "ls -t " path " 2>/dev/null || true")
-              ;; :default
-              (str "ls -t mementum/memories/ 2>/dev/null || true"))
-        result (run-command cmd)]
+  (case filter-type
+    :symbol
+    (let [result (run-grep "-rl" symbol "mementum/memories/" "mementum/knowledge/")]
+      {:success true
+       :result (or (:stdout result) "")
+       :filter (str "symbol: " symbol)})
+
+    :path
     {:success true
-     :result (:stdout result)
-     :filter (case filter-type
-               :symbol (str "symbol: " symbol)
-               :path   (str "path: " path)
-               nil)}))
+     :result (list-dir path)
+     :filter (str "path: " path)}
+
+    ;; :default — list all memories and knowledge
+    (let [memories (list-dir "mementum/memories/")
+          knowledge (list-dir "mementum/knowledge/")]
+      {:success true
+       :result (str (when (seq memories) (str "memories/\n" memories))
+                    (when (and (seq memories) (seq knowledge)) "\n\n")
+                    (when (seq knowledge) (str "knowledge/\n" knowledge)))
+       :filter nil})))
 
 (defn execute
   "Execute validated operation"
@@ -663,16 +770,26 @@
 ;; Main
 ;; ============================================================================
 
+(defn git-repo?
+  "Check if current directory is inside a git repository."
+  []
+  (:success (run-git "rev-parse" "--git-dir")))
+
 (defn process
   "Parse, validate, and execute DSL expression"
   [input]
-  (let [parse-result (parse input)]
-    (if (:success parse-result)
-      (let [validation-result (validate (:ast parse-result))]
-        (if (:success validation-result)
-          (execute validation-result)
-          validation-result))
-      parse-result)))
+  (if (not (git-repo?))
+    {:success false
+     :error "no-git-repo"
+     :message "Not inside a git repository"
+     :suggestion "Run 'git init' or change to a directory with a git repo"}
+    (let [parse-result (parse input)]
+      (if (:success parse-result)
+        (let [validation-result (validate (:ast parse-result))]
+          (if (:success validation-result)
+            (execute validation-result)
+            validation-result))
+        parse-result))))
 
 (defn -main [& args]
   (if (empty? args)

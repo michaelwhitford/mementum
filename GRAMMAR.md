@@ -75,12 +75,12 @@ The symbol system creates a **natural query language** built into content itself
 **Parameters:**
 - `symbol` - One of: 💡 🔄 🎯 🌀 ❌ ✅ 🔁 (required, extensible per domain)
 - `slug` - Kebab-case identifier: `[a-z0-9-]+` (required)
-- `content` - Memory content, <200 tokens (required)
+- `content` - Memory content, <200 words (required)
 
 **Maps to:**
 ```bash
 file="mementum/memories/${slug}.md"
-echo "${content}" > "${file}"
+echo "${symbol} ${content}" > "${file}"
 git add "${file}"
 git commit -m "${symbol} ${slug}"
 ```
@@ -89,7 +89,7 @@ git commit -m "${symbol} ${slug}"
 ```lisp
 (create 💡 "s-expr-parser" "S-expressions provide formal verification before execution.")
 (create 🔄 "fibonacci-depth" "Search depth scales with complexity using phi ratio.")
-(create 🎯 "token-budget" "Limit memories to 200 tokens for efficient recall.")
+(create 🎯 "word-budget" "Limit memories to fewer than 200 words for efficient recall.")
 (create 🌀 "meta-learning" "AI learns to store what it struggles to solve repeatedly.")
 (create ❌ "shell-injection" "Unescaped content in shell commands caused commit failures.")
 (create ✅ "storage-type-design" "Separating memories from knowledge reduced noise in recall.")
@@ -189,14 +189,14 @@ git diff {from} {to} -- mementum/memories/ mementum/knowledge/
 
 **Parameters:**
 - `ref` - File path, commit hash, or `HEAD~n` (required)
-- `content` - Updated content (required). Token limit applies only to memories (<200 tokens).
+- `content` - Updated content (required). Word limit applies only to memories (<200 words).
 
 **Maps to:**
 ```bash
 # Resolve ref to file path
 file=$(git show {ref} --name-only | grep -E 'mementum/(memories|knowledge)/' | head -1)
-# Update content
-echo "${content}" > "${file}"
+# Update content (write safely — no shell interpolation of content)
+printf '%s' "${content}" > "${file}"
 git add "${file}"
 git commit -m "🔄 update: $(basename ${file})"
 ```
@@ -252,8 +252,8 @@ git commit -m "❌ delete: $(basename ${file})"
 
 **Maps to:**
 ```bash
-# No filter — list all memories
-ls -t mementum/memories/
+# No filter — list all memories and knowledge
+ls -t mementum/memories/ mementum/knowledge/
 
 # Symbol filter — grep content across memories and knowledge
 grep -rl "💡" mementum/memories/ mementum/knowledge/ 2>/dev/null
@@ -321,7 +321,7 @@ ls -t mementum/knowledge/
 ;; Slug (kebab-case)
 (def slug-pattern #"^[a-z0-9-]+$")
 
-;; Content (< 200 whitespace tokens, memories only)
+;; Content (< 200 whitespace-separated words, memories only)
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
@@ -379,10 +379,12 @@ ls -t mementum/knowledge/
 <op>       ::= "search" | "create" | "read" | "history" | "diff" | "update" | "delete" | "list"
 <args>     ::= <arg>*
 <arg>      ::= <string> | <number> | <symbol> | <emoji>
-<string>   ::= '"' [^"]* '"'
-<number>   ::= [0-9]+
-<symbol>   ::= [a-zA-Z0-9-]+
-<emoji>    ::= 💡 | 🔄 | 🎯 | 🌀 | ❌ | ✅ | 🔁
+<string>   ::= '"' (<char> | <escape>)* '"'
+<char>     ::= [^"\\]
+<escape>   ::= '\' ("n" | "t" | "r" | "\\" | '"')
+<number>   ::= ["-"]? [0-9]+ ("." [0-9]+)?
+<symbol>   ::= [^ \t\n()"]+                  ; any non-whitespace, non-paren, non-quote sequence
+<emoji>    ::= 💡 | 🔄 | 🎯 | 🌀 | ❌ | ✅ | 🔁    ; known emojis; unknown emojis tokenize as <symbol>
 ```
 
 ---

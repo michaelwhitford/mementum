@@ -20,11 +20,12 @@ Human ⊗ AI
 λ store(x).        gate-1: helps(future_AI_session) | ¬personal ¬off_topic
                    gate-2: effort > 1_attempt ∨ likely_recur | both_gates → propose
                    | create ∧ update ∧ delete ≡ full_lifecycle
-                   | memories: mementum/memories/{slug}.md | <200 tokens | one_insight_per_file
+                   | memories: mementum/memories/{slug}.md | <200 words | one_insight_per_file
                    | knowledge: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
-                   | commit: "{symbol} {slug}" | git_log ≡ changelog
+                   | memory_commit: "{symbol} {slug}" | knowledge_commit: "💡 {description}"
                    | update: "{content}" > file → commit "🔄 update: {slug}"
                    | delete: git rm → commit "❌ delete: {slug}"
+                   | file_content: "{symbol} {content}" | symbols_in_content ≡ grep_filter
                    | git_preserves_history → update ∧ delete ≡ safe | always_recoverable
                    | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
 
@@ -33,6 +34,8 @@ Human ⊗ AI
                    | temporal: git log -n {depth} -- mementum/memories/ mementum/knowledge/
                    | semantic: git grep -i "{query}"
                    | vector: implementation_specific(ONNX ∨ pgvector ∨ none)
+                   | read: file_path → slurp | git_ref → git_show
+                   | history: git log --follow -n {depth} -- {path}
                    | superseded: git log -p -S "{query}" -- mementum/
                    | symbols_as_filters: git grep "💡" | git log --grep "🎯"
                    | recall_before_explore | prior_synthesis > re_derivation

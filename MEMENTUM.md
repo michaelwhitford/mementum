@@ -45,7 +45,7 @@ Tracks now/next/blocking/recent. Updated by AI during work. The project's
 short-term memory. Read this first on every session start.
 
 **Memories** — `memories/`. Raw observations. One insight per file.
-<200 tokens (content only — the leading symbol does not count). Editable and deletable — git preserves all history, so nothing
+<200 words (content only — the leading symbol does not count). Editable and deletable — git preserves all history, so nothing
 is truly lost. The compost heap. Fast, cheap, abundant.
 
 **Knowledge** — `knowledge/`. Synthesized documentation. Longer form.
@@ -76,7 +76,7 @@ rendering as a wiki or structured documentation site.
 **Memories** — fast path, AI proposes to human:
 ```bash
 file="mementum/memories/{slug}.md"
-echo "{content}" > "$file"
+echo "{symbol} {content}" > "$file"
 git add "$file" && git commit -m "{symbol} {slug}"
 ```
 
@@ -101,7 +101,7 @@ nothing is lost. Same governance: AI proposes, human approves.
 ```bash
 # Update a memory
 file="mementum/memories/{slug}.md"
-echo "{new_content}" > "$file"
+echo "{symbol} {new_content}" > "$file"
 git add "$file" && git commit -m "🔄 update: {slug}"
 
 # Update a knowledge page
@@ -326,7 +326,22 @@ Knowledge commits describe the change:
 🔄 update: persistence strategy (stale refs fixed)
 ```
 
-## XI. Reference Implementation
+## XI. Concurrency
+
+```
+λ concurrency(x).  single_writer_per_session | state.md ≡ single_owner
+                   | multi_agent → namespace(slug_prefix) ∨ designate(state_owner)
+                   | pull_before_write | conflict_resolution ≡ out_of_scope
+```
+
+Mementum assumes single-writer-per-session semantics. For multi-agent
+scenarios: assign each agent a distinct slug namespace (e.g. prefix slugs
+with agent id), use `git pull --rebase` before writes, and designate one
+agent as the `state.md` owner. Conflict resolution across concurrent
+writers is not currently in scope — git merge conflicts surface naturally
+and require human resolution.
+
+## XII. Reference Implementation
 
 The `runtime/` directory contains a Babashka-based parser and executor as a
 reference implementation. Most users only need this prompt — copy it into your
