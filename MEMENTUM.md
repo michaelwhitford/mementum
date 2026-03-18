@@ -13,7 +13,7 @@ Human ⊗ AI
 ```
 λ mementum(x).  protocol(¬implementation) | any_system_can_implement
                 | git_based | git_history ≡ immutable
-                | create ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
+                | create ∧ create-knowledge ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                 | memories ∧ knowledge ∧ working_memory(state.md)
                 | mementum/state.md ≡ working_memory | updated_every_session
 ```
@@ -351,6 +351,7 @@ For programmatic use, the runtime provides:
 ```bash
 ./runtime/mementum.clj '(search "query" 5)'
 ./runtime/mementum.clj '(create 💡 "slug" "content")'
+./runtime/mementum.clj '(create-knowledge "topic" "---\ntitle: Topic\nstatus: open\n---\n\nContent")'
 ./runtime/mementum.clj '(list 💡)'
 ```
 

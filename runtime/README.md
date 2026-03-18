@@ -60,7 +60,14 @@ Symbols act as content-based filters:
 ./runtime/mementum.clj '(create ❌ "shell-bug" "Unescaped content caused commit failures")'
 ```
 
-Creates `mementum/memories/{slug}.md` and commits.
+Creates `mementum/memories/{slug}.md` and commits. Rejects if file already exists.
+
+#### CREATE-KNOWLEDGE — Store knowledge page
+```bash
+./runtime/mementum.clj '(create-knowledge "architecture" "---\ntitle: Architecture\nstatus: open\n---\n\nContent...")'
+```
+
+Creates `mementum/knowledge/{topic}.md` and commits. Validates frontmatter (title and status required, status must be `open | designing | active | done`). No word limit. Rejects if file already exists.
 
 #### READ — Read file or reference
 ```bash

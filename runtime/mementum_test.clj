@@ -233,6 +233,61 @@
       (is (not (:valid result)))
       (is (:error result)))))
 
+(def valid-frontmatter "---\ntitle: Test Topic\nstatus: open\ncategory: explore\ntags: [test]\n---\n\nContent here.")
+
+(deftest validate-create-knowledge-operation
+  (testing "Valid create-knowledge"
+    (let [result (validate-create-knowledge ["test-topic" valid-frontmatter])]
+      (is (:valid result))
+      (is (= "test-topic" (:topic result)))
+      (is (= valid-frontmatter (:content result)))))
+
+  (testing "Valid with all statuses"
+    (doseq [status ["open" "designing" "active" "done"]]
+      (let [content (str "---\ntitle: Test\nstatus: " status "\n---\n\nContent")
+            result (validate-create-knowledge ["topic" content])]
+        (is (:valid result) (str "should be valid for status: " status)))))
+
+  (testing "Invalid: missing arguments"
+    (let [result (validate-create-knowledge ["topic"])]
+      (is (not (:valid result)))
+      (is (:error result))))
+
+  (testing "Invalid: bad slug"
+    (let [result (validate-create-knowledge ["Bad-Slug" valid-frontmatter])]
+      (is (not (:valid result)))
+      (is (= "constraint-violation" (:error result)))
+      (is (= :topic (:field result)))))
+
+  (testing "Invalid: no frontmatter"
+    (let [result (validate-create-knowledge ["topic" "Just plain content"])]
+      (is (not (:valid result)))
+      (is (= "constraint-violation" (:error result)))
+      (is (= :frontmatter (:field result)))))
+
+  (testing "Invalid: missing title in frontmatter"
+    (let [result (validate-create-knowledge ["topic" "---\nstatus: open\n---\nContent"])]
+      (is (not (:valid result)))
+      (is (= :frontmatter (:field result)))
+      (is (str/includes? (str (:value result)) "title"))))
+
+  (testing "Invalid: missing status in frontmatter"
+    (let [result (validate-create-knowledge ["topic" "---\ntitle: Test\n---\nContent"])]
+      (is (not (:valid result)))
+      (is (= :frontmatter (:field result)))
+      (is (str/includes? (str (:value result)) "status"))))
+
+  (testing "Invalid: bad status value"
+    (let [result (validate-create-knowledge ["topic" "---\ntitle: Test\nstatus: bogus\n---\nContent"])]
+      (is (not (:valid result)))
+      (is (= "constraint-violation" (:error result)))
+      (is (= :status (:field result)))))
+
+  (testing "No word limit for knowledge pages"
+    (let [long-content (str "---\ntitle: Test\nstatus: open\n---\n\n" (str/join " " (repeat 500 "word")))
+          result (validate-create-knowledge ["topic" long-content])]
+      (is (:valid result)))))
+
 (deftest validate-read-operation
   (testing "Valid read with mementum path"
     (let [result (validate-read ["mementum/memories/file.md"])]
@@ -397,6 +452,13 @@
         (is (= "create" (:op validation)))
         (is (= sym (get-in validation [:params :symbol]))))))
   
+  (testing "Validate parsed create-knowledge"
+    (let [parse-result (parse "(create-knowledge \"my-topic\" \"---\\ntitle: My Topic\\nstatus: open\\n---\\n\\nContent\")")
+          validation (validate (:ast parse-result))]
+      (is (:success validation))
+      (is (= "create-knowledge" (:op validation)))
+      (is (= "my-topic" (get-in validation [:params :topic])))))
+
   (testing "Validate unknown operation"
     (let [parse-result (parse "(unknown \"arg\")")
           validation (validate (:ast parse-result))]
@@ -478,7 +540,8 @@
     (is (contains? operations "history"))
     (is (contains? operations "diff"))
     (is (contains? operations "list"))
-    (is (= 8 (count operations)))))
+    (is (contains? operations "create-knowledge"))
+    (is (= 9 (count operations)))))
 
 ;; ============================================================================
 ;; Edge Cases

@@ -19,7 +19,9 @@
 
 (def slug-pattern #"^[a-z0-9-]+$")
 
-(def operations #{"search" "create" "read" "update" "delete" "history" "diff" "list"})
+(def operations #{"search" "create" "create-knowledge" "read" "update" "delete" "history" "diff" "list"})
+
+(def valid-statuses #{"open" "designing" "active" "done"})
 
 ;; ============================================================================
 ;; Utilities
@@ -344,6 +346,77 @@
      :slug (second args)
      :content (nth args 2)}))
 
+(defn- parse-frontmatter
+  "Extract frontmatter fields from content. Returns map of field->value or nil if no frontmatter."
+  [content]
+  (when (str/starts-with? (str/trim content) "---")
+    (let [parts (str/split (str/trim content) #"---" 3)]
+      (when (>= (count parts) 3)
+        (let [fm-text (nth parts 1)]
+          (->> (str/split-lines fm-text)
+               (map str/trim)
+               (remove str/blank?)
+               (map #(str/split % #":\s*" 2))
+               (filter #(= 2 (count %)))
+               (into {})))))))
+
+(defn validate-create-knowledge
+  "Validate create-knowledge operation.
+   Requires topic slug and content with valid frontmatter."
+  [args]
+  (cond
+    (< (count args) 2)
+    {:error "create-knowledge requires topic and content"
+     :suggestion "(create-knowledge \"topic\" \"---\\ntitle: Topic\\nstatus: open\\n---\\n\\nContent\")"}
+
+    (not (string? (first args)))
+    {:error "topic must be a string"
+     :suggestion "(create-knowledge \"topic\" \"content\")"}
+
+    (not (re-matches slug-pattern (first args)))
+    {:error "constraint-violation"
+     :field :topic
+     :value (first args)
+     :expected "lowercase letters, numbers, and hyphens only"
+     :suggestion "(create-knowledge \"my-topic\" \"content\")"}
+
+    (not (string? (second args)))
+    {:error "content must be a string"
+     :suggestion "(create-knowledge \"topic\" \"content\")"}
+
+    (nil? (parse-frontmatter (second args)))
+    {:error "constraint-violation"
+     :field :frontmatter
+     :value "missing or malformed"
+     :expected "Content must start with --- frontmatter block containing title and status"
+     :suggestion "(create-knowledge \"topic\" \"---\\ntitle: My Topic\\nstatus: open\\n---\\n\\nContent\")"}
+
+    (nil? (get (parse-frontmatter (second args)) "title"))
+    {:error "constraint-violation"
+     :field :frontmatter
+     :value "missing title"
+     :expected "Frontmatter must contain title field"
+     :suggestion "Add 'title: My Title' to frontmatter"}
+
+    (nil? (get (parse-frontmatter (second args)) "status"))
+    {:error "constraint-violation"
+     :field :frontmatter
+     :value "missing status"
+     :expected "Frontmatter must contain status field"
+     :suggestion "Add 'status: open' to frontmatter"}
+
+    (not (contains? valid-statuses (str/trim (get (parse-frontmatter (second args)) "status"))))
+    {:error "constraint-violation"
+     :field :status
+     :value (get (parse-frontmatter (second args)) "status")
+     :expected (str "one of: " (sort valid-statuses))
+     :suggestion "Use status: open | designing | active | done"}
+
+    :else
+    {:valid true
+     :topic (first args)
+     :content (second args)}))
+
 (defn validate-read
   "Validate read operation"
   [args]
@@ -511,6 +584,7 @@
         (let [validation (case op
                           "search" (validate-search args)
                           "create" (validate-create args)
+                          "create-knowledge" (validate-create-knowledge args)
                           "read" (validate-read args)
                           "update" (validate-update args)
                           "delete" (validate-delete args)
@@ -579,6 +653,35 @@
         (let [add-result (run-git "add" filepath)]
           (if (:success add-result)
             (let [commit-result (run-git "commit" "-m" (str symbol " " slug))]
+              (if (:success commit-result)
+                {:success true
+                 :file filepath
+                 :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+                {:success false
+                 :error "git-error"
+                 :stderr (:stderr commit-result)
+                 :suggestion "Check if git repo is initialized"}))
+            {:success false
+             :error "git-error"
+             :stderr (:stderr add-result)
+             :suggestion "Check if git repo is initialized"}))))))
+
+(defn exec-create-knowledge
+  "Execute create-knowledge operation — uses spit for file writes, no shell"
+  [{:keys [topic content]}]
+  (let [dir "mementum/knowledge"
+        filepath (str dir "/" topic ".md")]
+    (if (.exists (io/file filepath))
+      {:success false
+       :error "file-already-exists"
+       :file filepath
+       :suggestion (str "File already exists. Use (update \"" filepath "\" \"new content\") to modify")}
+      (do
+        (.mkdirs (io/file dir))
+        (spit filepath content)
+        (let [add-result (run-git "add" filepath)]
+          (if (:success add-result)
+            (let [commit-result (run-git "commit" "-m" (str "💡 " topic))]
               (if (:success commit-result)
                 {:success true
                  :file filepath
@@ -765,6 +868,7 @@
   (case op
     "search" (exec-search params)
     "create" (exec-create params)
+    "create-knowledge" (exec-create-knowledge params)
     "read" (exec-read params)
     "update" (exec-update params)
     "delete" (exec-delete params)

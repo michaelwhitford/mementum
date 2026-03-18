@@ -201,6 +201,15 @@ run_test "Deleted file should not exist" "$TOOL '(read \"mementum/memories/ref-t
 echo "=== Create Duplicate Slug Test ==="
 run_test "Create duplicate slug should fail" "$TOOL '(create 💡 \"git-as-memory\" \"Different content\")'" false
 
+echo "=== Create-Knowledge Operations ==="
+run_test "Create knowledge page" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntitle: Test Knowledge\nstatus: open\ncategory: explore\ntags: [test]\n---\n\nThis is a test knowledge page.\")'"
+run_test_contains "Read back knowledge page" "$TOOL '(read \"mementum/knowledge/test-knowledge.md\")'" "Test Knowledge"
+run_test_contains "Knowledge page has frontmatter" "$TOOL '(read \"mementum/knowledge/test-knowledge.md\")'" "status: open"
+run_test "Create duplicate knowledge slug should fail" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntitle: Dupe\nstatus: open\n---\nDupe\")'" false
+run_test "Create knowledge without frontmatter should fail" "$TOOL '(create-knowledge \"no-front\" \"Just plain content\")'" false
+run_test "Create knowledge with invalid status should fail" "$TOOL '(create-knowledge \"bad-status\" \"---\ntitle: Test\nstatus: bogus\n---\nContent\")'" false
+run_test "Clean up knowledge page" "$TOOL '(delete \"mementum/knowledge/test-knowledge.md\")'"
+
 echo "=== Security Regression Tests ==="
 run_test "Path traversal should fail" "$TOOL '(read \"mementum/../../etc/passwd\")'" false
 run_test "Shell injection via ref should fail" "$TOOL '(read \"HEAD; echo pwned\")'" false

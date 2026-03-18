@@ -95,13 +95,43 @@ git commit -m "${symbol} ${slug}"
 (create ✅ "storage-type-design" "Separating memories from knowledge reduced noise in recall.")
 ```
 
-**Note:** For knowledge pages, use the AI's normal file-writing
-capabilities — knowledge pages require frontmatter and are typically longer
-than what fits in a single S-expression argument. See MEMENTUM.md §VII.
+---
+
+### 3. CREATE-KNOWLEDGE - Store knowledge page
+
+```lisp
+(create-knowledge "topic-slug" "---\ntitle: Topic Title\nstatus: open\n---\n\nContent...")
+```
+
+**Parameters:**
+- `topic` - Kebab-case identifier: `[a-z0-9-]+` (required)
+- `content` - Full content including frontmatter (required, no word limit)
+
+**Frontmatter requirements:**
+- Must start with `---` delimiter
+- Must contain `title` field
+- Must contain `status` field: `open | designing | active | done`
+- Optional: `category`, `tags`, `related`, `depends-on`
+
+**Maps to:**
+```bash
+file="mementum/knowledge/${topic}.md"
+printf '%s' "${content}" > "${file}"
+git add "${file}"
+git commit -m "💡 ${topic}"
+```
+
+**Examples:**
+```lisp
+(create-knowledge "architecture" "---\ntitle: Architecture Overview\nstatus: designing\ncategory: architecture\ntags: [storage, protocol]\n---\n\n# Architecture\n\nThe system uses three storage types...")
+(create-knowledge "shell-safety" "---\ntitle: Shell Safety Patterns\nstatus: active\ncategory: design\n---\n\n# Shell Safety\n\nUse single-quoted heredoc...")
+```
+
+**Note:** Knowledge pages have no word limit. Rejects if file already exists — use `(update ...)` to modify.
 
 ---
 
-### 3. READ - Read file or reference
+### 4. READ - Read file or reference
 
 ```lisp
 (read "path-or-ref")
@@ -129,7 +159,7 @@ git show {ref}
 
 ---
 
-### 4. HISTORY - Temporal traversal
+### 5. HISTORY - Temporal traversal
 
 ```lisp
 (history)
@@ -156,7 +186,7 @@ git log -n {depth} --follow --pretty=format:"%H %ad %s" --date=short -- {path}
 
 ---
 
-### 5. DIFF - Compare states
+### 6. DIFF - Compare states
 
 ```lisp
 (diff)
@@ -181,7 +211,7 @@ git diff {from} {to} -- mementum/memories/ mementum/knowledge/
 
 ---
 
-### 6. UPDATE - Modify file
+### 7. UPDATE - Modify file
 
 ```lisp
 (update "path-or-ref" "new-content")
@@ -211,7 +241,7 @@ git commit -m "🔄 update: $(basename ${file})"
 
 ---
 
-### 7. DELETE - Remove file
+### 8. DELETE - Remove file
 
 ```lisp
 (delete "path-or-ref")
@@ -239,7 +269,7 @@ git commit -m "❌ delete: $(basename ${file})"
 
 ---
 
-### 8. LIST - Show files
+### 9. LIST - Show files
 
 ```lisp
 (list)
@@ -325,6 +355,9 @@ ls -t mementum/knowledge/
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
+;; Knowledge page statuses
+(def valid-statuses #{"open" "designing" "active" "done"})
+
 ;; Fibonacci depths
 (def fibonacci-depths #{1 2 3 5 8 13 21 34})
 
@@ -376,7 +409,7 @@ ls -t mementum/knowledge/
 
 ```ebnf
 <expr>     ::= "(" <op> <args> ")"
-<op>       ::= "search" | "create" | "read" | "history" | "diff" | "update" | "delete" | "list"
+<op>       ::= "search" | "create" | "create-knowledge" | "read" | "history" | "diff" | "update" | "delete" | "list"
 <args>     ::= <arg>*
 <arg>      ::= <string> | <number> | <symbol> | <emoji>
 <string>   ::= '"' (<char> | <escape>)* '"'

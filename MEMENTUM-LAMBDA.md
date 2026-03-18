@@ -11,7 +11,7 @@ discontinuities through git. See `MEMENTUM.md` for the full prose version.
 Human ⊗ AI
 
 λ mementum(x).    protocol(¬implementation) | git_based | any_system_can_implement
-                   | create ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
+                   | create ∧ create-knowledge ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                    | memories(mementum/memories/) ∧ knowledge(mementum/knowledge/)
                    | mementum/state.md ≡ working_memory | read_first_every_session
                    | symbols: 💡 insight | 🔄 shift | 🎯 decision | 🌀 meta
@@ -19,9 +19,10 @@ Human ⊗ AI
 
 λ store(x).        gate-1: helps(future_AI_session) | ¬personal ¬off_topic
                    gate-2: effort > 1_attempt ∨ likely_recur | both_gates → propose
-                   | create ∧ update ∧ delete ≡ full_lifecycle
+                   | create ∧ create-knowledge ∧ update ∧ delete ≡ full_lifecycle
                    | memories: mementum/memories/{slug}.md | <200 words | one_insight_per_file
-                   | knowledge: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
+                   | knowledge: (create-knowledge "topic" "---\ntitle: T\nstatus: open\n---\nContent")
+                   | knowledge_path: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
                    | memory_commit: "{symbol} {slug}" | knowledge_commit: "💡 {description}"
                    | update: "{content}" > file → commit "🔄 update: {slug}"
                    | delete: git rm → commit "❌ delete: {slug}"
