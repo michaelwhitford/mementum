@@ -568,23 +568,29 @@
   (let [dir "mementum/memories"
         filepath (str dir "/" slug ".md")
         file-content (str symbol " " content)]
-    (.mkdirs (io/file dir))
-    (spit filepath file-content)
-    (let [add-result (run-git "add" filepath)]
-      (if (:success add-result)
-        (let [commit-result (run-git "commit" "-m" (str symbol " " slug))]
-          (if (:success commit-result)
-            {:success true
-             :file filepath
-             :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+    (if (.exists (io/file filepath))
+      {:success false
+       :error "file-already-exists"
+       :file filepath
+       :suggestion (str "File already exists. Use (update \"" filepath "\" \"new content\") to modify")}
+      (do
+        (.mkdirs (io/file dir))
+        (spit filepath file-content)
+        (let [add-result (run-git "add" filepath)]
+          (if (:success add-result)
+            (let [commit-result (run-git "commit" "-m" (str symbol " " slug))]
+              (if (:success commit-result)
+                {:success true
+                 :file filepath
+                 :commit (str/trim (first (str/split (:stdout commit-result) #"\s")))}
+                {:success false
+                 :error "git-error"
+                 :stderr (:stderr commit-result)
+                 :suggestion "Check if git repo is initialized"}))
             {:success false
              :error "git-error"
-             :stderr (:stderr commit-result)
-             :suggestion "Check if git repo is initialized"}))
-        {:success false
-         :error "git-error"
-         :stderr (:stderr add-result)
-         :suggestion "Check if git repo is initialized"}))))
+             :stderr (:stderr add-result)
+             :suggestion "Check if git repo is initialized"}))))))
 
 (defn exec-read
   "Execute read operation — uses slurp for files, run-git for refs.

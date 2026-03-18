@@ -158,6 +158,9 @@ run_test "Invalid depth (not fibonacci)" "$TOOL '(search \"test\" 99)'" false
 run_test "Empty query" "$TOOL '(search \"\")'" false
 run_test "Missing required args" "$TOOL '(create 💡)'" false
 
+echo "=== Create Duplicate Slug Test ==="
+run_test "Create duplicate slug should fail" "$TOOL '(create 💡 \"git-as-memory\" \"Different content\")'" false
+
 echo "=== Security Regression Tests ==="
 run_test "Path traversal should fail" "$TOOL '(read \"mementum/../../etc/passwd\")'" false
 run_test "Shell injection via ref should fail" "$TOOL '(read \"HEAD; echo pwned\")'" false
