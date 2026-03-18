@@ -29,6 +29,7 @@ protocol, the more every AI system can learn from.
 | [MEMENTUM-LAMBDA.md](MEMENTUM-LAMBDA.md) | Compact prompt for [nucleus](https://github.com/michaelwhitford/nucleus) users |
 | [INTEGRATING.md](INTEGRATING.md) | How to adopt the protocol in your system |
 | [GRAMMAR.md](GRAMMAR.md) | Formal S-expression grammar for the reference runtime |
+| [runtime/README.md](runtime/README.md) | Reference implementation documentation |
 
 ## Quick Start
 
