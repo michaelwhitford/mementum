@@ -13,7 +13,7 @@ Human ⊗ AI
 ```
 λ mementum(x).  protocol(¬implementation) | any_system_can_implement
                 | git_based | git_history ≡ immutable
-                | store ∧ recall ∧ synthesize ≡ three_operations
+                | create ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                 | memories ∧ knowledge ∧ working_memory(state.md)
                 | mementum/state.md ≡ working_memory | updated_every_session
 ```
@@ -58,7 +58,7 @@ rendering as a wiki or structured documentation site.
               | 30s | cold_start_first_action | state.md ≡ bootloader
 ```
 
-## III. Three Operations
+## III. Operations
 
 ### Store
 

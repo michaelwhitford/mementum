@@ -5,6 +5,7 @@
 ;; See GRAMMAR.md for the full specification.
 
 (require '[clojure.string :as str]
+         '[clojure.java.io :as io]
          '[clojure.java.shell :as shell]
          '[clojure.pprint :refer [pprint]])
 
@@ -344,6 +345,10 @@
     {:error "content must be a string"
      :suggestion "(update \"path\" \"content\")"}
     
+    (str/blank? (second args))
+    {:error "content cannot be empty"
+     :suggestion "Provide non-empty content, or use (delete \"path\") to remove"}
+    
     (and (memory-ref? (first args))
          (not (valid-content? (second args))))
     {:error "constraint-violation"
@@ -547,37 +552,47 @@
 (defn exec-update
   "Execute update operation"
   [{:keys [ref content]}]
-  (let [filepath (resolve-ref ref)
-        update-cmd (str "echo \"" (str/replace content "\"" "\\\"") "\" > " filepath " && "
-                       "git add " filepath " && "
-                       "git commit -m \"🔄 update: " (last (str/split filepath #"/")) "\"")]
-    (let [result (run-command update-cmd)]
-      (if (:success result)
-        {:success true
-         :file filepath
-         :commit (str/trim (first (str/split (:stdout result) #"\s")))}
-        {:success false
-         :error "git-error"
-         :command update-cmd
-         :stderr (:stderr result)
-         :suggestion "Check if file exists"}))))
+  (let [filepath (resolve-ref ref)]
+    (if (not (.exists (io/file filepath)))
+      {:success false
+       :error "file-not-found"
+       :file filepath
+       :suggestion "Check the file path — file must exist to update"}
+      (let [update-cmd (str "echo \"" (str/replace content "\"" "\\\"") "\" > " filepath " && "
+                           "git add " filepath " && "
+                           "git commit -m \"🔄 update: " (last (str/split filepath #"/")) "\"")
+            result (run-command update-cmd)]
+        (if (:success result)
+          {:success true
+           :file filepath
+           :commit (str/trim (first (str/split (:stdout result) #"\s")))}
+          {:success false
+           :error "git-error"
+           :command update-cmd
+           :stderr (:stderr result)
+           :suggestion "Check if file exists and content differs from current"})))))
 
 (defn exec-delete
   "Execute delete operation"
   [{:keys [ref]}]
-  (let [filepath (resolve-ref ref)
-        delete-cmd (str "git rm " filepath " && "
-                       "git commit -m \"❌ delete: " (last (str/split filepath #"/")) "\"")]
-    (let [result (run-command delete-cmd)]
-      (if (:success result)
-        {:success true
-         :file filepath
-         :commit (str/trim (first (str/split (:stdout result) #"\s")))}
-        {:success false
-         :error "git-error"
-         :command delete-cmd
-         :stderr (:stderr result)
-         :suggestion "Check if file exists"}))))
+  (let [filepath (resolve-ref ref)]
+    (if (not (.exists (io/file filepath)))
+      {:success false
+       :error "file-not-found"
+       :file filepath
+       :suggestion "Check the file path — file must exist to delete"}
+      (let [delete-cmd (str "git rm " filepath " && "
+                           "git commit -m \"❌ delete: " (last (str/split filepath #"/")) "\"")
+            result (run-command delete-cmd)]
+        (if (:success result)
+          {:success true
+           :file filepath
+           :commit (str/trim (first (str/split (:stdout result) #"\s")))}
+          {:success false
+           :error "git-error"
+           :command delete-cmd
+           :stderr (:stderr result)
+           :suggestion "Check if file exists"})))))
 
 (defn exec-history
   "Execute history operation.

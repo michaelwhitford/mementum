@@ -224,7 +224,7 @@ constructs and executes the git commands. Same pipeline, different parse layer.
 
 A full statecharts-based runtime that enforces the protocol at the
 state-machine level — lifecycle transitions, governance gates,
-synthesis flows — is in development. When released, it will be linked here.
+synthesis flows. Currently unreleased.
 
 The reference implementation in `runtime/` models the enforcement logic
 of that system in simplified form. The constraints and error patterns

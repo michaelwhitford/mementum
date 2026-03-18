@@ -6,7 +6,7 @@ Consistency pass. Working through audit findings across all files.
 
 ## Next
 
-- Continue audit findings (#6, #7, #10-27)
+- Continue audit findings (#20-27)
 - Push and release
 - Add mementum/knowledge/ pages as the protocol matures
 - Field test: have external AI agents adopt the protocol and runtime

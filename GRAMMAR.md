@@ -108,7 +108,7 @@ than what fits in a single S-expression argument. See MEMENTUM.md §VII.
 ```
 
 **Parameters:**
-- `ref` - File path, commit hash, or `HEAD~n` (required)
+- `ref` - File path, commit hash, or `HEAD~n` (required). Any non-empty string is valid — not restricted to `mementum/` paths.
 
 **Maps to:**
 ```bash
@@ -319,14 +319,14 @@ ls -t mementum/knowledge/
 (def symbols #{"💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"})
 
 ;; Slug (kebab-case)
-(def slug-pattern #"[a-z0-9-]+")
+(def slug-pattern #"^[a-z0-9-]+$")
 
 ;; Content (< 200 whitespace tokens, memories only)
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
 ;; Fibonacci depths
-(def depths #{1 2 3 5 8 13 21 34})
+(def fibonacci-depths #{1 2 3 5 8 13 21 34})
 
 ;; Non-empty string
 (defn non-empty? [s]

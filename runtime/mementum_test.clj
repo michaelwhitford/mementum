@@ -287,7 +287,17 @@
   (testing "Invalid: missing arguments"
     (let [result (validate-update ["ref"])]
       (is (not (:valid result)))
-      (is (:error result)))))
+      (is (:error result))))
+
+  (testing "Invalid: empty content"
+    (let [result (validate-update ["mementum/memories/file.md" ""])]
+      (is (not (:valid result)))
+      (is (= "content cannot be empty" (:error result)))))
+
+  (testing "Invalid: blank content"
+    (let [result (validate-update ["mementum/memories/file.md" "   "])]
+      (is (not (:valid result)))
+      (is (= "content cannot be empty" (:error result))))))
 
 (deftest validate-delete-operation
   (testing "Valid delete"

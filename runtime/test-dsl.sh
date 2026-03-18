@@ -81,6 +81,20 @@ echo "=== DIFF Operations ==="
 run_test "Diff HEAD~1 to HEAD" "$TOOL '(diff)'"
 run_test "Diff HEAD~3 to HEAD" "$TOOL '(diff \"HEAD~3\" \"HEAD\")'"
 
+echo "=== CREATE / UPDATE / DELETE Lifecycle ==="
+# Create a test memory, update it, then delete it
+run_test "Create a test memory" "$TOOL '(create 💡 \"integration-test-fixture\" \"This is a test memory for integration testing.\")'"
+run_test "Read the created memory" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'"
+run_test "Update the test memory" "$TOOL '(update \"mementum/memories/integration-test-fixture.md\" \"Updated content for integration testing.\")'"
+run_test "Read the updated memory" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'"
+run_test "Delete the test memory" "$TOOL '(delete \"mementum/memories/integration-test-fixture.md\")'"
+run_test "Read deleted memory should fail" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'" false
+
+echo "=== UPDATE / DELETE Validation Tests ==="
+run_test "Update non-existent file" "$TOOL '(update \"mementum/memories/nonexistent.md\" \"content\")'" false
+run_test "Delete non-existent file" "$TOOL '(delete \"mementum/memories/nonexistent.md\")'" false
+run_test "Update with empty content" "$TOOL '(update \"mementum/memories/git-as-memory.md\" \"\")'" false
+
 echo "=== Constraint Validation Tests ==="
 run_test "Invalid symbol" "$TOOL '(create 💀 \"test\" \"content\")'" false
 run_test "Invalid slug (uppercase)" "$TOOL '(create 💡 \"Bad-Slug\" \"content\")'" false

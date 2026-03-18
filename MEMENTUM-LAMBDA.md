@@ -11,7 +11,7 @@ discontinuities through git. See `MEMENTUM.md` for the full prose version.
 Human ⊗ AI
 
 λ mementum(x).    protocol(¬implementation) | git_based | any_system_can_implement
-                   | store ∧ recall ∧ synthesize ≡ three_operations
+                   | create ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                    | memories(mementum/memories/) ∧ knowledge(mementum/knowledge/)
                    | mementum/state.md ≡ working_memory | read_first_every_session
                    | symbols: 💡 insight | 🔄 shift | 🎯 decision | 🌀 meta
