@@ -45,7 +45,7 @@ Tracks now/next/blocking/recent. Updated by AI during work. The project's
 short-term memory. Read this first on every session start.
 
 **Memories** — `memories/`. Raw observations. One insight per file.
-<200 tokens. Editable and deletable — git preserves all history, so nothing
+<200 tokens (content only — the leading symbol does not count). Editable and deletable — git preserves all history, so nothing
 is truly lost. The compost heap. Fast, cheap, abundant.
 
 **Knowledge** — `knowledge/`. Synthesized documentation. Longer form.
@@ -284,16 +284,12 @@ mechanism that bridges session discontinuities.
 ## IX. File Structure
 
 ```
-.
-├── MEMENTUM.md          # This file — the protocol prompt
-└── mementum/            # Mementum directory — presence signals protocol adoption
-    ├── state.md         # Working memory — read first every session
-    ├── memories/        # Raw observations
-    │   └── {slug}.md
-    └── knowledge/       # Synthesized documentation
-        ├── {topic}.md
-        └── {subtopic}/
-            └── {topic}.md
+MEMENTUM.md                              # This file — the protocol prompt
+mementum/                                # Presence signals protocol adoption
+mementum/state.md                        # Working memory — read first every session
+mementum/memories/{slug}.md              # Raw observations, one per file
+mementum/knowledge/{topic}.md            # Synthesized documentation
+mementum/knowledge/{subtopic}/{topic}.md # Nested knowledge pages
 ```
 
 ## X. Commit Convention

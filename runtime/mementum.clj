@@ -516,8 +516,11 @@
   "Execute create operation"
   [{:keys [symbol slug content]}]
   (let [filepath (str "mementum/memories/" slug ".md")
+        file-content (str symbol " " content)
         create-cmd (str "mkdir -p mementum/memories && "
-                       "echo \"" (str/replace content "\"" "\\\"") "\" > " filepath " && "
+                       "cat <<'MEMENTUM_EOF' > " filepath "\n"
+                       file-content "\n"
+                       "MEMENTUM_EOF\n"
                        "git add " filepath " && "
                        "git commit -m \"" symbol " " slug "\"")]
     (let [result (run-command create-cmd)]
@@ -558,7 +561,9 @@
        :error "file-not-found"
        :file filepath
        :suggestion "Check the file path — file must exist to update"}
-      (let [update-cmd (str "echo \"" (str/replace content "\"" "\\\"") "\" > " filepath " && "
+      (let [update-cmd (str "cat <<'MEMENTUM_EOF' > " filepath "\n"
+                           content "\n"
+                           "MEMENTUM_EOF\n"
                            "git add " filepath " && "
                            "git commit -m \"🔄 update: " (last (str/split filepath #"/")) "\"")
             result (run-command update-cmd)]

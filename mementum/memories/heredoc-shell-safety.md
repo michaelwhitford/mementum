@@ -1,0 +1,1 @@
+💡 Single-quoted heredoc delimiter (cat <<'EOF') prevents all shell interpretation. No variable expansion, no backtick execution, no escape processing. Use for any user-provided content written to files via shell commands.
