@@ -1,0 +1,1 @@
+🔁 λ audit(targets, dimensions). spawn(explorer) → read_all({targets}) → cross_reference(each⊗all) → findings({dimensions}) | output: evidence(exact_quotes, file_pairs) ∧ severity(HIGH|MEDIUM|LOW) ∧ fix(suggested) | named_dimensions > open_ended | evidence_required → ¬hallucinated_findings | inject: {targets} ∧ {dimensions} per_task
