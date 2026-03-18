@@ -2,11 +2,10 @@
 
 ## Now
 
-Consistency pass. Working through audit findings across all files.
+All 27 audit findings addressed. Protocol, runtime, and docs fully consistent.
 
 ## Next
 
-- Continue audit findings (#20-27)
 - Push and release
 - Add mementum/knowledge/ pages as the protocol matures
 - Field test: have external AI agents adopt the protocol and runtime
@@ -17,6 +16,7 @@ Nothing.
 
 ## Recent
 
+- ✅ 27-finding audit complete — all inconsistencies and gaps resolved
 - 🔄 tiers→types — purged tier-1/tier-2 hierarchy language across all 10 files
 - 🔄 ≤200→<200 — standardized token limit symbol for smaller model compatibility
 - 🔄 🗑️→❌ — delete commits use standard symbol, eliminated undocumented 🗑️
