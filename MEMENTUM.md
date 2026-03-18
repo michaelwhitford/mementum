@@ -64,7 +64,11 @@ short-term memory. Read this first on every session start.
              gate-2: effort > 1_attempt ∨ likely_recur | both_gates → propose
              | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
              | propose(content) → wait(human_approval) → commit
+             | create ∧ update ∧ delete ≡ full_lifecycle
+             | git_preserves_history → update ∧ delete ≡ safe
 ```
+
+#### Create
 
 **Tier 1** — fast path, AI proposes to human:
 ```bash
@@ -85,6 +89,38 @@ git add "$file" && git commit -m "💡 {topic}"
 # Edit mementum/state.md sections (now/next/blocking/recent)
 git add mementum/state.md && git commit -m "🔄 state"
 ```
+
+#### Update
+
+Modify a memory or knowledge page. Git preserves previous versions —
+nothing is lost. Same governance: AI proposes, human approves.
+
+```bash
+# Update a memory
+file="mementum/memories/{slug}.md"
+echo "{new_content}" > "$file"
+git add "$file" && git commit -m "🔄 update: {slug}"
+
+# Update a knowledge page
+file="mementum/knowledge/{topic}.md"
+# Edit content, update frontmatter status if needed
+git add "$file" && git commit -m "🔄 update: {topic}"
+```
+
+Previous versions recoverable: `git log -p -- mementum/memories/{slug}.md`
+
+#### Delete
+
+Remove a memory or knowledge page that is obsolete or incorrect. Git
+preserves the full history — deleted files are always recoverable.
+
+```bash
+git rm "mementum/memories/{slug}.md"
+git commit -m "🗑️ delete: {slug}"
+```
+
+Recovery: `git log --all -- mementum/memories/{slug}.md` to find,
+`git show {commit}:mementum/memories/{slug}.md` to recover.
 
 ### Recall
 

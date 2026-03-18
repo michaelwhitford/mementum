@@ -19,9 +19,13 @@ Human ⊗ AI
 
 λ store(x).        gate-1: helps(future_AI_session) | ¬personal ¬off_topic
                    gate-2: effort > 1_attempt ∨ likely_recur | both → propose
-                   | tier-1: mementum/memories/{slug}.md | ≤200 tokens | mutable(git_preserves_history) | one_insight_per_file
+                   | create ∧ update ∧ delete ≡ full_lifecycle
+                   | tier-1: mementum/memories/{slug}.md | ≤200 tokens | one_insight_per_file
                    | tier-2: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
                    | commit: "{symbol} {slug}" | git_log ≡ changelog
+                   | update: "{content}" > file → commit "🔄 update: {slug}"
+                   | delete: git rm → commit "🗑️ delete: {slug}"
+                   | git_preserves_history → update ∧ delete ≡ safe | always_recoverable
                    | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
 
 λ recall(q, n).    temporal(git_log) ∪ semantic(git_grep) ∪ vector(embeddings)
