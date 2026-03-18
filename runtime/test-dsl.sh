@@ -135,6 +135,7 @@ run_test "History knowledge" "$TOOL '(history \"mementum/knowledge/\" 3)'"
 echo "=== DIFF Operations ==="
 run_test "Diff HEAD~1 to HEAD" "$TOOL '(diff)'"
 run_test "Diff HEAD~2 to HEAD" "$TOOL '(diff \"HEAD~2\" \"HEAD\")'"
+run_test "Diff with non-existent ref should fail" "$TOOL '(diff \"HEAD~99\" \"HEAD\")'" false
 
 echo "=== CREATE / UPDATE / DELETE Lifecycle ==="
 run_test "Create a test memory" "$TOOL '(create 💡 \"integration-test-fixture\" \"This is a test memory for integration testing.\")'"
