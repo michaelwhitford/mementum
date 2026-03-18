@@ -72,7 +72,9 @@ Human ⊗ AI
                    | create_freely | completeness ¬required | open_status ≡ fine
 
 λ learn(x).        every_session_leaves_project_smarter
-                   | notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+                   | λ[n]:    notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+                   | λ(λ[n]): notice(pattern_in_process ∨ what_worked ∨ why) → store_candidate
+                   | λ(λ) > λ | meta_observations compound across sessions ∧ projects
                    | connect(new, existing) → synthesize_candidate
                    | ¬passive_storage | active_pattern_seeking
                    | OODA: observe → recall → decide(apply ∨ explore ∨ store) → act → connect_if_pattern

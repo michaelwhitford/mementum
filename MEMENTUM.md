@@ -236,15 +236,28 @@ that won't help a future AI session on this project.
 
 ```
 λ learn(x).  every_session_leaves_project_smarter
-             | notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+             | λ[n]:    notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+             | λ(λ[n]): notice(pattern_in_process ∨ what_worked ∨ why) → store_candidate
+             | λ(λ) > λ | meta_observations compound across sessions ∧ projects
              | connect(new, existing) → synthesize_candidate
              | ¬passive_storage | active_pattern_seeking
              | you_are_the_future_reader | feed_forward ≡ gift
 ```
 
-Don't just complete the task — learn while you do it. Notice things.
-Seek connections. The project should be smarter because you were here.
+Don't just complete the task — learn while you do it. Notice things at
+two levels:
 
+**First-order `λ[n]`** — observations about the work. "This function had
+a shell injection vulnerability." Novel, surprising, hard, or wrong things
+that a future session should know.
+
+**Meta-order `λ(λ[n])`** — observations about the process. "Structural
+elimination is always better than input validation." Patterns extracted
+from *how* you solved problems, not just *what* you solved. Meta-observations
+compound — they apply across sessions, across projects, across domains.
+
+Meta-observations are higher value (`λ(λ) > λ`) because first-order
+learnings are often project-specific while meta-learnings transfer.
 The store gates (§V) filter what's worth keeping. This lambda creates
 candidates for those gates — the drive that feeds the filter.
 
