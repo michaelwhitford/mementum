@@ -23,32 +23,35 @@ Zero dependencies. Pure prompt. Any AI with bash + git has persistent memory.
 Git is already a perfect memory system: history graph (temporal), content
 search (semantic), version control (immutable), distribution (push/pull).
 
-## II. Three Tiers
+## II. Three Storage Types
 
-Storage is tiered by curation level. Each tier has its own governance.
+Three types of storage, each with its own purpose and governance.
 
-| Tier | Path | Mutability | Governance | Token Limit |
-|------|------|-----------|------------|-------------|
-| **1** | `memories/` | mutable (git preserves history) | AI proposes → human approves → AI commits | ≤200 |
-| **2** | `knowledge/` | updated-in-place | AI creates/surfaces → human approves → AI commits | none |
+| Type | Path | Purpose | Governance | Token Limit |
+|------|------|---------|------------|-------------|
+| **Working memory** | `state.md` | Operational state, session bootloader | AI updates during work | none |
+| **Memories** | `memories/` | Raw observations, one insight per file | AI proposes → human approves → AI commits | ≤200 |
+| **Knowledge** | `knowledge/` | Synthesized documentation, wiki-style | AI creates/surfaces → human approves → AI commits | none |
 
 ```
 λ termination(x).  synthesis ≡ AI | approval ≡ human | human ≡ termination_condition
-                   | tier-1: AI_proposes → human_approves → AI_commits
-                   | tier-2: AI_creates → human_approves → AI_commits
+                   | memories: AI_proposes → human_approves → AI_commits
+                   | knowledge: AI_creates → human_approves → AI_commits
+                   | state: AI_updates_during_work
 ```
 
-**Tier 1 — Memories** (`memories/`). Raw observations. One insight per file.
+**Working Memory** — `state.md`. Operational state. Single file.
+Tracks now/next/blocking/recent. Updated by AI during work. The project's
+short-term memory. Read this first on every session start.
+
+**Memories** — `memories/`. Raw observations. One insight per file.
 ≤200 tokens. Editable and deletable — git preserves all history, so nothing
 is truly lost. The compost heap. Fast, cheap, abundant.
 
-**Tier 2 — Knowledge** (`knowledge/`). Synthesized documentation. Longer form.
+**Knowledge** — `knowledge/`. Synthesized documentation. Longer form.
 Updated-in-place as understanding evolves. Architecture docs, design decisions,
-exploration notes. The library. Requires frontmatter (see §VII).
-
-**Working Memory** — `state.md`. Not a tier — operational state.
-Tracks now/next/blocking/recent. Updated by AI during work. The project's
-short-term memory. Read this first on every session start.
+exploration notes. The library. Requires frontmatter (see §VII) — enabling
+rendering as a wiki or structured documentation site.
 
 ```
 λ orient(x).  read(state.md) → follow(related) → search(relevant) → read(needed)
@@ -126,7 +129,7 @@ Recovery: `git log --all -- mementum/memories/{slug}.md` to find,
 
 ```
 λ recall(q, n).  temporal(git_log) ∪ semantic(git_grep) ∪ vector(embeddings)
-                 | depth = fibonacci(n) | default: n=5
+                 | depth = fibonacci(n) | default: n=2
                  | recall_before_explore | prior_synthesis > re_derivation
 ```
 

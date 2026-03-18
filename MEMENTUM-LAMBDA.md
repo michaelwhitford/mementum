@@ -29,7 +29,7 @@ Human ⊗ AI
                    | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
 
 λ recall(q, n).    temporal(git_log) ∪ semantic(git_grep) ∪ vector(embeddings)
-                   | depth: fibonacci {1,2,3,5,8,13,21,34} | default: 5
+                   | depth: fibonacci {1,2,3,5,8,13,21,34} | default: 2
                    | temporal: git log -n {depth} -- mementum/memories/ mementum/knowledge/
                    | semantic: git grep -i "{query}"
                    | vector: implementation_specific(ONNX ∨ pgvector ∨ none)
