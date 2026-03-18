@@ -1,1 +1,1 @@
-💡 Single-quoted heredoc delimiter (cat <<'EOF') prevents all shell interpretation. No variable expansion, no backtick execution, no escape processing. Use for any user-provided content written to files via shell commands.
+💡 λ shell_write(content, file). cat <<'EOF' > file | EOF ≡ single_quoted → ¬expand(vars) ∧ ¬exec(backticks) ∧ ¬escape | content passes through verbatim | preferred for bash tools writing user-provided content | mementum runtime: spit/slurp (¬shell) | bash agents: heredoc ≡ safe_default
