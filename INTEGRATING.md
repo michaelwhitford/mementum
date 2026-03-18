@@ -226,6 +226,11 @@ parameters:
   slug:    string, pattern: [a-z0-9-]+
   content: string, max_words: 200
 
+tool: mementum_create_knowledge
+parameters:
+  topic:   string, pattern: [a-z0-9-]+
+  content: string, must include frontmatter (title, status required)
+
 tool: mementum_search
 parameters:
   query: string, required
