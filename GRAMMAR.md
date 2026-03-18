@@ -101,10 +101,10 @@ than what fits in a single S-expression argument. See MEMENTUM.md §VII.
 
 ---
 
-### 3. VIEW - Read file or reference
+### 3. READ - Read file or reference
 
 ```lisp
-(view "path-or-ref")
+(read "path-or-ref")
 ```
 
 **Parameters:**
@@ -120,11 +120,11 @@ git show {ref}
 
 **Examples:**
 ```lisp
-(view "mementum/memories/s-expr-parser.md")
-(view "mementum/knowledge/architecture.md")
-(view "mementum/state.md")
-(view "HEAD~1")
-(view "abc123")
+(read "mementum/memories/s-expr-parser.md")
+(read "mementum/knowledge/architecture.md")
+(read "mementum/state.md")
+(read "HEAD~1")
+(read "abc123")
 ```
 
 ---
@@ -376,7 +376,7 @@ ls -t mementum/knowledge/
 
 ```ebnf
 <expr>     ::= "(" <op> <args> ")"
-<op>       ::= "search" | "create" | "view" | "history" | "diff" | "update" | "delete" | "list"
+<op>       ::= "search" | "create" | "read" | "history" | "diff" | "update" | "delete" | "list"
 <args>     ::= <arg>*
 <arg>      ::= <string> | <number> | <symbol> | <emoji>
 <string>   ::= '"' [^"]* '"'
@@ -397,11 +397,11 @@ ls -t mementum/knowledge/
 ; Create new memory
 (create 💡 "search-optimization" "Using fibonacci depth improves recall efficiency")
 
-; View recently created
-(view "HEAD")
+; Read recently created
+(read "HEAD")
 
-; View working memory
-(view "mementum/state.md")
+; Read working memory
+(read "mementum/state.md")
 
 ; Update a memory with more details
 (update "HEAD" "Using fibonacci depth improves recall efficiency. The phi ratio provides optimal scaling from simple to complex queries.")

@@ -233,34 +233,34 @@
       (is (not (:valid result)))
       (is (:error result)))))
 
-(deftest validate-view-operation
-  (testing "Valid view with mementum path"
-    (let [result (validate-view ["mementum/memories/file.md"])]
+(deftest validate-read-operation
+  (testing "Valid read with mementum path"
+    (let [result (validate-read ["mementum/memories/file.md"])]
       (is (:valid result))
       (is (= "mementum/memories/file.md" (:ref result)))))
   
-  (testing "Valid view with knowledge path"
-    (let [result (validate-view ["mementum/knowledge/architecture.md"])]
+  (testing "Valid read with knowledge path"
+    (let [result (validate-read ["mementum/knowledge/architecture.md"])]
       (is (:valid result))
       (is (= "mementum/knowledge/architecture.md" (:ref result)))))
 
-  (testing "Valid view with state.md"
-    (let [result (validate-view ["mementum/state.md"])]
+  (testing "Valid read with state.md"
+    (let [result (validate-read ["mementum/state.md"])]
       (is (:valid result))
       (is (= "mementum/state.md" (:ref result)))))
   
-  (testing "Valid view with git ref"
-    (let [result (validate-view ["HEAD"])]
+  (testing "Valid read with git ref"
+    (let [result (validate-read ["HEAD"])]
       (is (:valid result))
       (is (= "HEAD" (:ref result)))))
   
   (testing "Invalid: missing ref"
-    (let [result (validate-view [])]
+    (let [result (validate-read [])]
       (is (not (:valid result)))
       (is (:error result))))
   
   (testing "Invalid: non-string ref"
-    (let [result (validate-view [42])]
+    (let [result (validate-read [42])]
       (is (not (:valid result)))
       (is (:error result)))))
 
@@ -462,7 +462,7 @@
   (testing "Valid operations"
     (is (contains? operations "search"))
     (is (contains? operations "create"))
-    (is (contains? operations "view"))
+    (is (contains? operations "read"))
     (is (contains? operations "update"))
     (is (contains? operations "delete"))
     (is (contains? operations "history"))

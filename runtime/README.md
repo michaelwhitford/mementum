@@ -62,12 +62,12 @@ Symbols act as content-based filters:
 
 Creates `mementum/memories/{slug}.md` and commits.
 
-#### VIEW — Read file or reference
+#### READ — Read file or reference
 ```bash
-./runtime/mementum.clj '(view "mementum/state.md")'
-./runtime/mementum.clj '(view "mementum/memories/parser.md")'
-./runtime/mementum.clj '(view "mementum/knowledge/architecture.md")'
-./runtime/mementum.clj '(view "HEAD")'
+./runtime/mementum.clj '(read "mementum/state.md")'
+./runtime/mementum.clj '(read "mementum/memories/parser.md")'
+./runtime/mementum.clj '(read "mementum/knowledge/architecture.md")'
+./runtime/mementum.clj '(read "HEAD")'
 ```
 
 #### UPDATE — Modify file

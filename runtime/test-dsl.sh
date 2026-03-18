@@ -68,9 +68,9 @@ run_test "Search for 'fibonacci'" "$TOOL '(search \"fibonacci\")'"
 run_test "Search for 'git' with depth 5" "$TOOL '(search \"git\" 5)'"
 run_test "Search for 'OODA'" "$TOOL '(search \"OODA\" 3)'"
 
-echo "=== VIEW Operations ==="
-run_test "View state.md" "$TOOL '(view \"mementum/state.md\")'"
-run_test "View HEAD" "$TOOL '(view \"HEAD\")'"
+echo "=== READ Operations ==="
+run_test "Read state.md" "$TOOL '(read \"mementum/state.md\")'"
+run_test "Read HEAD" "$TOOL '(read \"HEAD\")'"
 
 echo "=== HISTORY Operations ==="
 run_test "History with default depth" "$TOOL '(history)'"

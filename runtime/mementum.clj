@@ -18,7 +18,7 @@
 
 (def slug-pattern #"^[a-z0-9-]+$")
 
-(def operations #{"search" "create" "view" "update" "delete" "history" "diff" "list"})
+(def operations #{"search" "create" "read" "update" "delete" "history" "diff" "list"})
 
 ;; ============================================================================
 ;; Utilities
@@ -304,17 +304,17 @@
      :slug (second args)
      :content (nth args 2)}))
 
-(defn validate-view
-  "Validate view operation"
+(defn validate-read
+  "Validate read operation"
   [args]
   (cond
     (empty? args)
-    {:error "view requires a reference"
-     :suggestion "(view \"mementum/memories/file.md\") or (view \"HEAD\")"}
+    {:error "read requires a reference"
+     :suggestion "(read \"mementum/memories/file.md\") or (read \"HEAD\")"}
     
     (not (string? (first args)))
-    {:error "view reference must be a string"
-     :suggestion "(view \"mementum/memories/file.md\")"}
+    {:error "read reference must be a string"
+     :suggestion "(read \"mementum/memories/file.md\")"}
     
     :else
     {:valid true
@@ -467,7 +467,7 @@
         (let [validation (case op
                           "search" (validate-search args)
                           "create" (validate-create args)
-                          "view" (validate-view args)
+                          "read" (validate-read args)
                           "update" (validate-update args)
                           "delete" (validate-delete args)
                           "history" (validate-history args)
@@ -526,8 +526,8 @@
          :stderr (:stderr result)
          :suggestion "Check if git repo is initialized"}))))
 
-(defn exec-view
-  "Execute view operation"
+(defn exec-read
+  "Execute read operation"
   [{:keys [ref]}]
   (let [;; If ref is a mementum/ file path, cat it; otherwise use git show
         cmd (if (str/starts-with? ref "mementum/")
@@ -632,7 +632,7 @@
   (case op
     "search" (exec-search params)
     "create" (exec-create params)
-    "view" (exec-view params)
+    "read" (exec-read params)
     "update" (exec-update params)
     "delete" (exec-delete params)
     "history" (exec-history params)
@@ -666,7 +666,7 @@
       (println "Examples:")
       (println "  ./mementum.clj '(search \"architecture\" 5)'")
       (println "  ./mementum.clj '(create 💡 \"my-insight\" \"What I learned\")'")
-      (println "  ./mementum.clj '(view \"mementum/state.md\")'")
+      (println "  ./mementum.clj '(read \"mementum/state.md\")'")
       (println "  ./mementum.clj '(list 💡)'")
       (println "  ./mementum.clj '(list \"mementum/knowledge/\")'")
       (println "  ./mementum.clj '(update \"mementum/memories/my-insight.md\" \"Updated content\")'")
