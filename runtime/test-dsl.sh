@@ -75,6 +75,31 @@ fail_count=0
 
 TOOL="bb runtime/mementum.clj"
 
+run_test_contains() {
+    test_count=$((test_count + 1))
+    local name="$1"
+    local cmd="$2"
+    local expected="$3"
+    
+    echo -e "${BLUE}Test $test_count: $name${NC}"
+    
+    if eval "$cmd" > /tmp/mementum-test.out 2>&1; then
+        if grep -q "$expected" /tmp/mementum-test.out; then
+            echo -e "${GREEN}✓ PASS${NC}"
+            pass_count=$((pass_count + 1))
+        else
+            echo -e "${RED}✗ FAIL (output missing: $expected)${NC}"
+            cat /tmp/mementum-test.out
+            fail_count=$((fail_count + 1))
+        fi
+    else
+        echo -e "${RED}✗ FAIL (command failed)${NC}"
+        cat /tmp/mementum-test.out
+        fail_count=$((fail_count + 1))
+    fi
+    echo
+}
+
 run_test() {
     test_count=$((test_count + 1))
     local name="$1"
@@ -144,6 +169,14 @@ run_test "Update the test memory" "$TOOL '(update \"mementum/memories/integratio
 run_test "Read the updated memory" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'"
 run_test "Delete the test memory" "$TOOL '(delete \"mementum/memories/integration-test-fixture.md\")'"
 run_test "Read deleted memory should fail" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'" false
+
+echo "=== Content Round-Trip Tests ==="
+run_test "Create round-trip memory" "$TOOL '(create 💡 \"round-trip-test\" \"Round-trip content verification.\")'"
+run_test_contains "Read back matches created content" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "Round-trip content verification"
+run_test_contains "Read back contains symbol prefix" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "💡 Round-trip"
+run_test "Update round-trip memory" "$TOOL '(update \"mementum/memories/round-trip-test.md\" \"Updated round-trip content.\")'"
+run_test_contains "Read back matches updated content" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "Updated round-trip content"
+run_test "Clean up round-trip memory" "$TOOL '(delete \"mementum/memories/round-trip-test.md\")'"
 
 echo "=== UPDATE / DELETE Validation Tests ==="
 run_test "Update non-existent file" "$TOOL '(update \"mementum/memories/nonexistent.md\" \"content\")'" false
