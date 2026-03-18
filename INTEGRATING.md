@@ -24,10 +24,11 @@ contract. The symbols are a shared vocabulary. The commit convention is a
 shared changelog format. When you adopt the protocol, you're making this
 project legible to any AI system that understands Mementum.
 
-A discovery mechanism (DNS TXT records) is in development that will allow
-Mementum-adopting projects to find and learn from each other. The structure
-you're adopting now is designed to be network-compatible when that ships.
-Every project that conforms becomes a node in that network.
+The network already works: any AI with bash + git can `git clone` a mementum
+repo and learn from its memories and knowledge. The standardized structure
+means the AI knows exactly where to look. Discovery mechanisms (searching
+GitHub for `mementum/` directories, DNS TXT records) are in development to
+make finding repos easier. Every project that conforms is already a node.
 
 Adopt now for local value. The structure pays dividends later.
 
@@ -90,6 +91,21 @@ thing any future AI session will read — write it for a brilliant stranger.
 For most projects, this level is sufficient. The AI follows the protocol
 because the prompt tells it to. Constraints are soft — the AI respects them
 by convention, not enforcement.
+
+### Strengthening the approval gate
+
+The approval gate is a protocol requirement — enforcement is your system's
+responsibility. At Level 1, add instructions to your system prompt:
+
+```
+Always propose memories to the user before committing.
+Never commit to mementum/ without explicit user approval.
+```
+
+This is prompt-level compliance — not as strong as runtime enforcement,
+but effective for interactive sessions. For automated pipelines without
+a human in the loop, use Level 2 enforcement or add gate logic to your
+agent loop.
 
 ---
 

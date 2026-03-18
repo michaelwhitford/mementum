@@ -149,6 +149,11 @@ git grep -i "{query}"
 **Fibonacci depth progression:** 1 → 2 → 3 → 5 → 8 → 13 → 21 → 34.
 Scale depth with query complexity. Simple check: 2. Deep research: 13+.
 
+**Superseded content** — what you believed before you changed your mind:
+```bash
+git log -p -S "{query}" -- mementum/   # find content that was added or removed
+```
+
 **Symbols as content filters:**
 ```bash
 git grep "💡"                    # all insights

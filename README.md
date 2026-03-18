@@ -17,9 +17,10 @@ across session boundaries using git as the memory substrate.
 
 Every adopting project uses the same structure — same directory layout, same
 symbols, same commit convention. This makes any Mementum project immediately
-legible to any other mementum AI system. A discovery mechanism is in development to connect
-adopting projects into a learning network. The more projects that adopt the
-protocol, the more every AI system can learn from.
+legible to any other mementum AI system. The network already works: any AI
+with bash + git can clone a mementum repo and learn from its memories and
+knowledge. The more projects that adopt the protocol, the more every AI
+system can learn from.
 
 ## Documents
 

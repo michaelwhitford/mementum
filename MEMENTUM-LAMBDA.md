@@ -33,6 +33,7 @@ Human ⊗ AI
                    | temporal: git log -n {depth} -- mementum/memories/ mementum/knowledge/
                    | semantic: git grep -i "{query}"
                    | vector: implementation_specific(ONNX ∨ pgvector ∨ none)
+                   | superseded: git log -p -S "{query}" -- mementum/
                    | symbols_as_filters: git grep "💡" | git log --grep "🎯"
                    | recall_before_explore | prior_synthesis > re_derivation
 

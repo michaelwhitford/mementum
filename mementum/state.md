@@ -2,7 +2,7 @@
 
 ## Now
 
-All 27 audit findings addressed. Protocol, runtime, and docs fully consistent.
+Dialectic complete. All findings addressed. Ready to release.
 
 ## Next
 
@@ -16,6 +16,7 @@ Nothing.
 
 ## Recent
 
+- ✅ Dialectic evaluation — recall completeness, approval gate, network claims addressed
 - ✅ 27-finding audit complete — all inconsistencies and gaps resolved
 - 🔄 tiers→types — purged tier-1/tier-2 hierarchy language across all 10 files
 - 🔄 ≤200→<200 — standardized token limit symbol for smaller model compatibility
