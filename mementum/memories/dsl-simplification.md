@@ -1,1 +1,1 @@
-Simplified from lambda-heavy v1 syntax to flat Nucleus-style operations. Reduced token count by 50%+ while maintaining clarity and validation capabilities.
+Flat S-expression syntax — (operation arg1 arg2 ...) — minimizes entropy in AI-generated commands. Fewer ways to express the same thing means fewer parse failures. Inspired by Nucleus DSL principles: reduced ambiguity, fail-fast validation, structured errors for self-correction. Token-efficient for prompt budgets.

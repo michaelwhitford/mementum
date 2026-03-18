@@ -2,7 +2,7 @@
 
 ## Now
 
-All protocol documents and runtime aligned. Ready for release review.
+Protocol, runtime, tests, and memories all aligned. Ready for release.
 
 ## Next
 
@@ -16,6 +16,7 @@ Nothing.
 
 ## Recent
 
+- 🔄 Memories curated — crud-operations, dsl-simplification, test-parser updated for current protocol
 - ✅ Runtime updated — paths, filenames, symbols, both tiers, Unicode emoji handling
 - ✅ Tests updated — 305 unit assertions + 28 integration tests, all passing
 - ✅ runtime/README.md rewritten for reference implementation framing
