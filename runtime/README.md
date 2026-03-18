@@ -8,7 +8,7 @@ at this code and tell it to integrate with your project.
 
 - ✅ **S-expression parser** — tokenizes and parses MEMENTUM DSL with full Unicode support
 - ✅ **Constraint validation** — enforces symbols, slugs, token limits, fibonacci depths
-- ✅ **Two-tier support** — operates across `mementum/memories/` and `mementum/knowledge/`
+- ✅ **All storage types** — operates across `mementum/memories/`, `mementum/knowledge/`, and `mementum/state.md`
 - ✅ **Git execution** — safe execution of git commands
 - ✅ **Structured errors** — self-correcting feedback for AI agents
 - ✅ **Fast** — Babashka provides instant startup
@@ -47,14 +47,14 @@ Run from the repo root (where `mementum/` directory lives):
 ./runtime/mementum.clj '(search "architecture" 5)'
 ```
 
-Searches across both tiers. Returns temporal (git log) and semantic (git grep) results.
+Searches across memories and knowledge. Returns temporal (git log) and semantic (git grep) results.
 
 Symbols act as content-based filters:
 - `(search "query")` — entire mementum directory
 - `(search "💡")` — insights only
 - `(search "architecture 🔄")` — pattern-shifts about architecture
 
-#### CREATE — Store memory (Tier 1)
+#### CREATE — Store memory
 ```bash
 ./runtime/mementum.clj '(create 💡 "parser" "S-expression parser validates grammar")'
 ./runtime/mementum.clj '(create ❌ "shell-bug" "Unescaped content caused commit failures")'
@@ -75,7 +75,7 @@ Creates `mementum/memories/{slug}.md` and commits.
 ./runtime/mementum.clj '(update "mementum/memories/parser.md" "Updated content")'
 ```
 
-Token limit (<200) applies to tier-1 memories only. Knowledge pages have no limit.
+Token limit (<200) applies to memories only. Knowledge pages have no limit.
 Git preserves all history — previous versions always recoverable.
 
 #### DELETE — Remove file
@@ -153,7 +153,7 @@ Three modes: no args (all memories), symbol (grep content), path (ls directory).
 Lowercase letters, numbers, hyphens: `[a-z0-9-]+`
 
 ### Content
-Tier-1 memories: < 200 whitespace-separated tokens. Knowledge pages: no limit.
+Memories: < 200 whitespace-separated tokens. Knowledge pages: no limit.
 
 ### Fibonacci Depths
 `1, 2, 3, 5, 8, 13, 21, 34` — used in SEARCH and HISTORY.

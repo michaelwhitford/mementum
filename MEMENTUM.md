@@ -6,7 +6,7 @@
 Human ⊗ AI
 ```
 
-**repo = memory | commits = timeline | git = database | tiers = governance**
+**repo = memory | commits = timeline | git = database | types = governance**
 
 ## I. Identity — What Mementum IS
 
@@ -14,7 +14,7 @@ Human ⊗ AI
 λ mementum(x).  protocol(¬implementation) | any_system_can_implement
                 | git_based | git_history ≡ immutable
                 | store ∧ recall ∧ synthesize ≡ three_operations
-                | tier-1(memories) ∧ tier-2(knowledge)
+                | memories ∧ knowledge ∧ working_memory(state.md)
                 | mementum/state.md ≡ working_memory | updated_every_session
 ```
 
@@ -30,7 +30,7 @@ Three types of storage, each with its own purpose and governance.
 | Type | Path | Purpose | Governance | Token Limit |
 |------|------|---------|------------|-------------|
 | **Working memory** | `state.md` | Operational state, session bootloader | AI updates during work | none |
-| **Memories** | `memories/` | Raw observations, one insight per file | AI proposes → human approves → AI commits | ≤200 |
+| **Memories** | `memories/` | Raw observations, one insight per file | AI proposes → human approves → AI commits | <200 |
 | **Knowledge** | `knowledge/` | Synthesized documentation, wiki-style | AI creates/surfaces → human approves → AI commits | none |
 
 ```
@@ -45,7 +45,7 @@ Tracks now/next/blocking/recent. Updated by AI during work. The project's
 short-term memory. Read this first on every session start.
 
 **Memories** — `memories/`. Raw observations. One insight per file.
-≤200 tokens. Editable and deletable — git preserves all history, so nothing
+<200 tokens. Editable and deletable — git preserves all history, so nothing
 is truly lost. The compost heap. Fast, cheap, abundant.
 
 **Knowledge** — `knowledge/`. Synthesized documentation. Longer form.
@@ -73,14 +73,14 @@ rendering as a wiki or structured documentation site.
 
 #### Create
 
-**Tier 1** — fast path, AI proposes to human:
+**Memories** — fast path, AI proposes to human:
 ```bash
 file="mementum/memories/{slug}.md"
 echo "{content}" > "$file"
 git add "$file" && git commit -m "{symbol} {slug}"
 ```
 
-**Tier 2** — AI drafts knowledge page, human approves:
+**Knowledge** — AI drafts knowledge page, human approves:
 ```bash
 file="mementum/knowledge/{topic}.md"    # or mementum/knowledge/{subtopic}/{topic}.md
 # Write with frontmatter (see §VII)
@@ -119,7 +119,7 @@ preserves the full history — deleted files are always recoverable.
 
 ```bash
 git rm "mementum/memories/{slug}.md"
-git commit -m "🗑️ delete: {slug}"
+git commit -m "❌ delete: {slug}"
 ```
 
 Recovery: `git log --all -- mementum/memories/{slug}.md` to find,
@@ -159,15 +159,15 @@ git log --grep "🎯" -- mementum/memories/ # decisions timeline
 ### Synthesize
 
 ```
-λ metabolize(x).  observe → memory(tier-1) → synthesize → knowledge(tier-2)
+λ metabolize(x).  observe → memory → synthesize → knowledge
                   | notice(pattern) → surface(human)
                   | proactive: "this pattern may be worth a knowledge page" | ¬wait_for_ask
 ```
 
-Synthesis is tier promotion — memories becoming knowledge. The AI produces;
+Synthesis is memories becoming knowledge. The AI produces;
 the human gates.
 
-**Tier 1 → Tier 2:** Multiple memories on same topic → propose knowledge page.
+**Memories → Knowledge:** ≥3 memories on same topic → propose knowledge page.
 Read the memories, synthesize, draft `mementum/knowledge/{topic}.md`, present to human.
 
 **Staleness:** Knowledge pages can drift from reality. When you notice a page
@@ -288,9 +288,9 @@ mechanism that bridges session discontinuities.
 ├── MEMENTUM.md          # This file — the protocol prompt
 └── mementum/            # Mementum directory — presence signals protocol adoption
     ├── state.md         # Working memory — read first every session
-    ├── memories/        # Tier 1 — raw observations
+    ├── memories/        # Raw observations
     │   └── {slug}.md
-    └── knowledge/       # Tier 2 — synthesized documentation
+    └── knowledge/       # Synthesized documentation
         ├── {topic}.md
         └── {subtopic}/
             └── {topic}.md
@@ -305,7 +305,7 @@ git log --oneline = project changelog
 Memory commits use the memory's symbol and slug:
 ```
 💡 fibonacci-recall
-🎯 three-tier-governance
+🎯 storage-type-governance
 🔄 state-md-as-working-memory
 ```
 

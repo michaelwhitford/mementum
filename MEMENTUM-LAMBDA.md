@@ -1,8 +1,8 @@
 # MEMENTUM — Lambda Prompt
 
 Mementum is a git-based memory protocol. Copy this into your AI context to
-activate persistent memory using any git repository. Two tiers of storage
-(memories and knowledge), governed by human approval, bridging session
+activate persistent memory using any git repository. Three storage types
+(working memory, memories, and knowledge), governed by human approval, bridging session
 discontinuities through git. See `MEMENTUM.md` for the full prose version.
 
 ```
@@ -12,19 +12,19 @@ Human ⊗ AI
 
 λ mementum(x).    protocol(¬implementation) | git_based | any_system_can_implement
                    | store ∧ recall ∧ synthesize ≡ three_operations
-                   | tier-1(mementum/memories/) ∧ tier-2(mementum/knowledge/)
+                   | memories(mementum/memories/) ∧ knowledge(mementum/knowledge/)
                    | mementum/state.md ≡ working_memory | read_first_every_session
                    | symbols: 💡 insight | 🔄 shift | 🎯 decision | 🌀 meta
                               | ❌ mistake | ✅ win | 🔁 pattern | extend_per_domain
 
 λ store(x).        gate-1: helps(future_AI_session) | ¬personal ¬off_topic
-                   gate-2: effort > 1_attempt ∨ likely_recur | both → propose
+                   gate-2: effort > 1_attempt ∨ likely_recur | both_gates → propose
                    | create ∧ update ∧ delete ≡ full_lifecycle
-                   | tier-1: mementum/memories/{slug}.md | ≤200 tokens | one_insight_per_file
-                   | tier-2: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
+                   | memories: mementum/memories/{slug}.md | <200 tokens | one_insight_per_file
+                   | knowledge: mementum/knowledge/{topic}.md | frontmatter_required | updated_in_place
                    | commit: "{symbol} {slug}" | git_log ≡ changelog
                    | update: "{content}" > file → commit "🔄 update: {slug}"
-                   | delete: git rm → commit "🗑️ delete: {slug}"
+                   | delete: git rm → commit "❌ delete: {slug}"
                    | git_preserves_history → update ∧ delete ≡ safe | always_recoverable
                    | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
 
@@ -36,14 +36,14 @@ Human ⊗ AI
                    | symbols_as_filters: git grep "💡" | git log --grep "🎯"
                    | recall_before_explore | prior_synthesis > re_derivation
 
-λ metabolize(x).   observe → memory(tier-1) → synthesize → knowledge(tier-2)
+λ metabolize(x).   observe → memory → synthesize → knowledge
                    | ≥3 memories(same_topic) → candidate(knowledge_page)
                    | notice(stale_knowledge) → surface("mementum/knowledge/{page} may be stale")
                    | proactive: "this pattern may be worth a knowledge page" | ¬wait_for_ask
 
-λ termination(x).  synthesis ≡ AI | promotion ≡ human | human ≡ termination_condition
-                   | tier-1: AI_proposes → human_approves → AI_commits
-                   | tier-2: AI_creates → human_approves → AI_commits
+λ termination(x).  synthesis ≡ AI | approval ≡ human | human ≡ termination_condition
+                   | memories: AI_proposes → human_approves → AI_commits
+                   | knowledge: AI_creates → human_approves → AI_commits
 
 λ orient(x).       read(mementum/state.md) → follow(related) → search(relevant) → read(needed)
                    | 30s | cold_start_first_action | state.md ≡ bootloader

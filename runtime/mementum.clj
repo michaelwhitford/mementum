@@ -54,7 +54,7 @@
 (defn- match-emoji
   "Check if input at position i starts with any known emoji.
    Returns the matched emoji string or nil. Checks longest first
-   to handle multi-codepoint sequences (e.g. 🗑️ = U+1F5D1 U+FE0F)."
+   to handle multi-codepoint sequences (e.g. ❌ = U+274C)."
   [input i]
   (some (fn [sym]
           (when (and (<= (+ i (count sym)) (count input))
@@ -321,7 +321,7 @@
      :ref (first args)}))
 
 (defn- memory-ref?
-  "Check if a reference points to a tier-1 memory (subject to token limit)"
+  "Check if a reference points to a memory (subject to token limit)"
   [ref]
   (or (str/starts-with? ref "mementum/memories/")
       ;; Git refs (HEAD, hashes) are ambiguous — apply token limit conservatively
@@ -329,7 +329,7 @@
 
 (defn validate-update
   "Validate update operation.
-   Token limit (<200) applies only to tier-1 memories, not knowledge pages."
+   Token limit (<200) applies only to memories, not knowledge pages."
   [args]
   (cond
     (< (count args) 2)
@@ -349,7 +349,7 @@
     {:error "constraint-violation"
      :field :content
      :value (str (token-count (second args)) " tokens")
-     :expected "< 200 tokens (tier-1 memories only)"
+     :expected "< 200 tokens (memories only)"
      :suggestion "Reduce content length, or use a knowledge page for longer content"}
     
     :else
@@ -486,7 +486,7 @@
 (defn resolve-ref
   "Resolve git reference to file path.
    If ref is already a mementum/ path, use it directly.
-   Otherwise resolve via git show against both tiers."
+   Otherwise resolve via git show against memories and knowledge."
   [ref]
   (if (str/starts-with? ref "mementum/")
     ref
@@ -567,7 +567,7 @@
   [{:keys [ref]}]
   (let [filepath (resolve-ref ref)
         delete-cmd (str "git rm " filepath " && "
-                       "git commit -m \"🗑️  delete: " (last (str/split filepath #"/")) "\"")]
+                       "git commit -m \"❌ delete: " (last (str/split filepath #"/")) "\"")]
     (let [result (run-command delete-cmd)]
       (if (:success result)
         {:success true
@@ -600,7 +600,7 @@
        :stderr (:stderr result)})))
 
 (defn exec-diff
-  "Execute diff operation across both tiers"
+  "Execute diff operation across memories and knowledge"
   [{:keys [from to]}]
   (let [cmd (str "git diff " from " " to " -- mementum/memories/ mementum/knowledge/")
         result (run-command cmd)]

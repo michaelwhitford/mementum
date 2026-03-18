@@ -64,8 +64,8 @@ If the project doesn't have a `mementum/` directory yet, create it:
 ```
 mementum/
 ├── state.md          # Working memory — create with now/next/blocking/recent sections
-├── memories/         # Tier 1 — raw observations, one per file
-└── knowledge/        # Tier 2 — synthesized documentation
+├── memories/         # Raw observations, one per file
+└── knowledge/        # Synthesized documentation
 ```
 
 Initialize `state.md` with the current project context. This is the first
@@ -139,7 +139,7 @@ These are the protocol's hard constraints. They're defined in
 pattern: [a-z0-9-]+
 ```
 
-**Token limit** — Tier-1 memories only:
+**Token limit** — memories only:
 ```
 < 200 whitespace-separated tokens
 (knowledge pages have no limit)
@@ -150,11 +150,11 @@ pattern: [a-z0-9-]+
 valid: 1, 2, 3, 5, 8, 13, 21, 34
 ```
 
-**Paths** — Two tiers, one state file:
+**Paths** — three storage types:
 ```
-mementum/memories/{slug}.md    — tier 1
-mementum/knowledge/{topic}.md  — tier 2
 mementum/state.md              — working memory
+mementum/memories/{slug}.md    — memories
+mementum/knowledge/{topic}.md  — knowledge
 ```
 
 ### Structured error responses
@@ -223,8 +223,8 @@ constructs and executes the git commands. Same pipeline, different parse layer.
 ## Level 3 — Statecharts Runtime
 
 A full statecharts-based runtime that enforces the protocol at the
-state-machine level — lifecycle transitions, governance gates, tier
-promotion — is in development. When released, it will be linked here.
+state-machine level — lifecycle transitions, governance gates,
+synthesis flows — is in development. When released, it will be linked here.
 
 The reference implementation in `runtime/` models the enforcement logic
 of that system in simplified form. The constraints and error patterns
@@ -242,13 +242,13 @@ Git provides temporal indexing (log), content search (grep), immutability
 infrastructure. Every developer machine already has it. Every AI coding
 agent already has access to it.
 
-### Why two tiers?
+### Why three storage types?
 
-Tier 1 (memories) is fast and cheap — raw observations, ≤200 tokens, one
-per file. Tier 2 (knowledge) is synthesized and maintained — longer form,
-updated in place, frontmatter for metadata. The tier boundary creates a
-natural curation pressure: observations accumulate, patterns emerge, and
-synthesis promotes them to durable knowledge.
+Memories are fast and cheap — raw observations, <200 tokens, one per file.
+Knowledge is synthesized and maintained — longer form, updated in place,
+frontmatter for metadata. Working memory (`state.md`) bridges sessions.
+The boundaries create natural curation pressure: observations accumulate,
+patterns emerge, and synthesis distills them into durable knowledge.
 
 ### Why human-in-the-loop?
 
@@ -260,7 +260,7 @@ hallucinates, and accumulates noise. The human gate ensures signal quality.
 
 Symbols embedded in file content (not just filenames or commit messages)
 enable `git grep` to work as a semantic filter. `git grep "💡"` finds all
-insights across both tiers. This is cheaper and more portable than any
+insights across memories and knowledge. This is cheaper and more portable than any
 metadata system — it's just text search on a character that carries meaning.
 
 ### Why does the structure have to be exactly `mementum/`?

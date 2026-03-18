@@ -10,7 +10,7 @@ Zero dependencies. No runtime required.
 Mementum defines how AI agents store, recall, and synthesize knowledge
 across session boundaries using git as the memory substrate.
 
-- **Two tiers** — memories (raw observations, ≤200 tokens) and knowledge (synthesized documentation)
+- **Three storage types** — working memory (`state.md`), memories (raw observations, <200 tokens), and knowledge (synthesized documentation)
 - **Three operations** — store, recall, synthesize
 - **Human governance** — AI proposes, human approves, AI commits
 - **Git-native** — `git log` for temporal search, `git grep` for semantic search, commit history for immutability

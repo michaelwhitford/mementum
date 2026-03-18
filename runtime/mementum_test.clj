@@ -271,7 +271,7 @@
       (is (= "mementum/memories/file.md" (:ref result)))
       (is (= "new content" (:content result)))))
 
-  (testing "Token limit applies to tier-1 memories"
+  (testing "Token limit applies to memories"
     (let [long-content (str/join " " (repeat 300 "word"))
           result (validate-update ["mementum/memories/file.md" long-content])]
       (is (not (:valid result)))

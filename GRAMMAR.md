@@ -26,7 +26,7 @@ Inspired by [Matryoshka](https://github.com/yogthos/Matryoshka)'s Nucleus DSL:
 
 All operations use flat S-expression syntax: `(operation arg1 arg2 ...)`
 
-Operations work across both tiers (`mementum/memories/` and `mementum/knowledge/`)
+Operations work across all storage types (`mementum/memories/`, `mementum/knowledge/`, and `mementum/state.md`)
 unless otherwise noted.
 
 ### 1. SEARCH - Query memories and knowledge
@@ -66,7 +66,7 @@ The symbol system creates a **natural query language** built into content itself
 
 ---
 
-### 2. CREATE - Store memory (Tier 1)
+### 2. CREATE - Store memory
 
 ```lisp
 (create 💡 "slug-name" "content...")
@@ -92,10 +92,10 @@ git commit -m "${symbol} ${slug}"
 (create 🎯 "token-budget" "Limit memories to 200 tokens for efficient recall.")
 (create 🌀 "meta-learning" "AI learns to store what it struggles to solve repeatedly.")
 (create ❌ "shell-injection" "Unescaped content in shell commands caused commit failures.")
-(create ✅ "two-tier-design" "Separating memories from knowledge reduced noise in recall.")
+(create ✅ "storage-type-design" "Separating memories from knowledge reduced noise in recall.")
 ```
 
-**Note:** For knowledge pages (Tier 2), use the AI's normal file-writing
+**Note:** For knowledge pages, use the AI's normal file-writing
 capabilities — knowledge pages require frontmatter and are typically longer
 than what fits in a single S-expression argument. See MEMENTUM.md §VII.
 
@@ -189,7 +189,7 @@ git diff {from} {to} -- mementum/memories/ mementum/knowledge/
 
 **Parameters:**
 - `ref` - File path, commit hash, or `HEAD~n` (required)
-- `content` - Updated content (required). Token limit applies only to tier-1 memories (<200 tokens).
+- `content` - Updated content (required). Token limit applies only to memories (<200 tokens).
 
 **Maps to:**
 ```bash
@@ -226,7 +226,7 @@ git commit -m "🔄 update: $(basename ${file})"
 file=$(git show {ref} --name-only | grep -E 'mementum/(memories|knowledge)/' | head -1)
 # Remove file
 git rm "${file}"
-git commit -m "🗑️  delete: $(basename ${file})"
+git commit -m "❌ delete: $(basename ${file})"
 ```
 
 **Examples:**
@@ -255,7 +255,7 @@ git commit -m "🗑️  delete: $(basename ${file})"
 # No filter — list all memories
 ls -t mementum/memories/
 
-# Symbol filter — grep content across both tiers
+# Symbol filter — grep content across memories and knowledge
 grep -rl "💡" mementum/memories/ mementum/knowledge/ 2>/dev/null
 
 # Path filter — list specific directory
@@ -321,7 +321,7 @@ ls -t mementum/knowledge/
 ;; Slug (kebab-case)
 (def slug-pattern #"[a-z0-9-]+")
 
-;; Content (< 200 whitespace tokens, tier-1 only)
+;; Content (< 200 whitespace tokens, memories only)
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
@@ -406,7 +406,7 @@ ls -t mementum/knowledge/
 ; Update a memory with more details
 (update "HEAD" "Using fibonacci depth improves recall efficiency. The phi ratio provides optimal scaling from simple to complex queries.")
 
-; Check history across both tiers
+; Check history across memories and knowledge
 (history "mementum/" 3)
 
 ; Compare with previous state
