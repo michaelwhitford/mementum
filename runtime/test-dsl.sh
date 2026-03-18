@@ -158,6 +158,18 @@ run_test "Invalid depth (not fibonacci)" "$TOOL '(search \"test\" 99)'" false
 run_test "Empty query" "$TOOL '(search \"\")'" false
 run_test "Missing required args" "$TOOL '(create 💡)'" false
 
+echo "=== Security Regression Tests ==="
+run_test "Path traversal should fail" "$TOOL '(read \"mementum/../../etc/passwd\")'" false
+run_test "Shell injection via ref should fail" "$TOOL '(read \"HEAD; echo pwned\")'" false
+run_test "Shell injection via search should not execute" "$TOOL '(search \"test; echo pwned\")'"
+
+echo "=== Read Failure Tests ==="
+run_test "Read non-existent memory file" "$TOOL '(read \"mementum/memories/ghost.md\")'" false
+run_test "Read non-existent git ref" "$TOOL '(read \"abc123nonexistent\")'" false
+
+echo "=== Idempotent Update Test ==="
+run_test "Update with identical content is no-op success" "$TOOL '(update \"mementum/memories/git-as-memory.md\" \"💡 Git provides perfect memory substrate: temporal graph, semantic search, immutability, distribution.\")'"
+
 echo "=== Parse Error Tests ==="
 run_test "Malformed S-expression" "$TOOL '(create 💡 \"test\"'" false
 run_test "Unknown operation" "$TOOL '(unknown \"arg\")'" false
