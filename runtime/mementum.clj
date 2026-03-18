@@ -460,7 +460,7 @@
   "Execute search operation"
   [{:keys [query depth]}]
   (let [log-cmd (str "git log -n " depth " --grep \"" query "\" --pretty=format:\"%h %ad %s\" --date=short -- memories/")
-        grep-cmd (str "git grep -i \"" query "\" memories/ || true")
+        grep-cmd (str "git grep -i \"" query "\" || true")
         log-result (run-command log-cmd)
         grep-result (run-command grep-cmd)]
     {:success true

@@ -1,4 +1,4 @@
-# MEMENTUM Grammar Specification v2
+# MEMENTUM Grammar Specification
 
 ## Architecture
 
@@ -26,7 +26,10 @@ Inspired by [Matryoshka](https://github.com/yogthos/Matryoshka)'s Nucleus DSL:
 
 All operations use flat S-expression syntax: `(operation arg1 arg2 ...)`
 
-### 1. SEARCH - Query memory
+Operations work across both tiers (`mementum/memories/` and `mementum/knowledge/`)
+unless otherwise noted.
+
+### 1. SEARCH - Query memories and knowledge
 
 ```lisp
 (search "query-string")
@@ -39,8 +42,8 @@ All operations use flat S-expression syntax: `(operation arg1 arg2 ...)`
 
 **Maps to:**
 ```bash
-git log -n {depth} --grep "{query}" -- memories/
-git grep -i "{query}" memories/
+git log -n {depth} --grep "{query}" --pretty=format:"%h %ad %s" --date=short -- mementum/memories/ mementum/knowledge/
+git grep -i "{query}"
 ```
 
 **Examples:**
@@ -50,23 +53,33 @@ git grep -i "{query}" memories/
 (search "git-memory" 13)
 ```
 
+**Search Strategies:**
+
+Symbols act as **content-based filters** rather than path restrictions:
+
+- **Broad search** - `(search "query")` → entire repository
+- **By type** - `(search "💡")` → insights only
+- **Combined** - `(search "architecture 🔄")` → pattern-shifts in architecture
+- **Decisions** - `(search "decisions 🎯")` → decisions about topic
+
+The symbol system creates a **natural query language** built into content itself.
+
 ---
 
-### 2. CREATE - Store memory
+### 2. CREATE - Store memory (Tier 1)
 
 ```lisp
 (create 💡 "slug-name" "content...")
 ```
 
 **Parameters:**
-- `symbol` - One of: 💡 🔄 🎯 🌀 (required)
+- `symbol` - One of: 💡 🔄 🎯 🌀 ❌ ✅ 🔁 (required, extensible per domain)
 - `slug` - Kebab-case identifier: `[a-z0-9-]+` (required)
 - `content` - Memory content, <200 tokens (required)
 
 **Maps to:**
 ```bash
-date=$(date +%Y-%m-%d)
-file="memories/${date}-${slug}-${symbol}.md"
+file="mementum/memories/${slug}.md"
 echo "${content}" > "${file}"
 git add "${file}"
 git commit -m "${symbol} ${slug}"
@@ -78,27 +91,38 @@ git commit -m "${symbol} ${slug}"
 (create 🔄 "fibonacci-depth" "Search depth scales with complexity using phi ratio.")
 (create 🎯 "token-budget" "Limit memories to 200 tokens for efficient recall.")
 (create 🌀 "meta-learning" "AI learns to store what it struggles to solve repeatedly.")
+(create ❌ "shell-injection" "Unescaped content in shell commands caused commit failures.")
+(create ✅ "two-tier-design" "Separating memories from knowledge reduced noise in recall.")
 ```
+
+**Note:** For knowledge pages (Tier 2), use the AI's normal file-writing
+capabilities — knowledge pages require frontmatter and are typically longer
+than what fits in a single S-expression argument. See MEMENTUM.md §VII.
 
 ---
 
-### 3. VIEW - Read memory
+### 3. VIEW - Read file or reference
 
 ```lisp
 (view "path-or-ref")
 ```
 
 **Parameters:**
-- `ref` - Git reference: commit hash, file path, or `HEAD~n`
+- `ref` - File path, commit hash, or `HEAD~n` (required)
 
 **Maps to:**
 ```bash
+# File path — read directly
+cat {ref}
+# Git reference — show from history
 git show {ref}
 ```
 
 **Examples:**
 ```lisp
-(view "memories/2026-01-24-s-expr-parser-💡.md")
+(view "mementum/memories/s-expr-parser.md")
+(view "mementum/knowledge/architecture.md")
+(view "mementum/state.md")
 (view "HEAD~1")
 (view "abc123")
 ```
@@ -114,19 +138,20 @@ git show {ref}
 ```
 
 **Parameters:**
-- `path` - File path (optional, default: `memories/`)
+- `path` - File or directory path (optional, default: `mementum/memories/ mementum/knowledge/`)
 - `depth` - Fibonacci depth (optional, default: 2)
 
 **Maps to:**
 ```bash
-git log -n {depth} --follow --pretty=format:"%H %ad %s" -- {path}
+git log -n {depth} --follow --pretty=format:"%H %ad %s" --date=short -- {path}
 ```
 
 **Examples:**
 ```lisp
 (history)
-(history "memories/2026-01-24-s-expr-parser-💡.md")
-(history "memories/" 8)
+(history "mementum/memories/s-expr-parser.md")
+(history "mementum/memories/" 8)
+(history "mementum/knowledge/" 5)
 ```
 
 ---
@@ -144,7 +169,7 @@ git log -n {depth} --follow --pretty=format:"%H %ad %s" -- {path}
 
 **Maps to:**
 ```bash
-git diff {from} {to} -- memories/
+git diff {from} {to} -- mementum/memories/ mementum/knowledge/
 ```
 
 **Examples:**
@@ -156,20 +181,20 @@ git diff {from} {to} -- memories/
 
 ---
 
-### 6. UPDATE - Modify memory
+### 6. UPDATE - Modify file
 
 ```lisp
 (update "path-or-ref" "new-content")
 ```
 
 **Parameters:**
-- `ref` - Git reference: file path, commit hash, or `HEAD~n` (required)
-- `content` - Updated memory content, <200 tokens (required)
+- `ref` - File path, commit hash, or `HEAD~n` (required)
+- `content` - Updated content (required). Token limit applies only to tier-1 memories (<200 tokens).
 
 **Maps to:**
 ```bash
 # Resolve ref to file path
-file=$(git show {ref} --name-only | grep memories/)
+file=$(git show {ref} --name-only | grep -E 'mementum/(memories|knowledge)/' | head -1)
 # Update content
 echo "${content}" > "${file}"
 git add "${file}"
@@ -178,25 +203,27 @@ git commit -m "🔄 update: $(basename ${file})"
 
 **Examples:**
 ```lisp
-(update "memories/2026-01-24-s-expr-parser-💡.md" "S-expressions provide formal verification before execution. Parser validates grammar and constraints.")
+(update "mementum/memories/s-expr-parser.md" "S-expressions provide formal verification before execution. Parser validates grammar and constraints.")
 (update "HEAD~1" "Updated content with more details.")
 ```
 
+**Note:** Git preserves all history. Previous versions are always recoverable.
+
 ---
 
-### 7. DELETE - Remove memory
+### 7. DELETE - Remove file
 
 ```lisp
 (delete "path-or-ref")
 ```
 
 **Parameters:**
-- `ref` - Git reference: file path, commit hash, or `HEAD~n` (required)
+- `ref` - File path, commit hash, or `HEAD~n` (required)
 
 **Maps to:**
 ```bash
 # Resolve ref to file path
-file=$(git show {ref} --name-only | grep memories/)
+file=$(git show {ref} --name-only | grep -E 'mementum/(memories|knowledge)/' | head -1)
 # Remove file
 git rm "${file}"
 git commit -m "🗑️  delete: $(basename ${file})"
@@ -204,35 +231,43 @@ git commit -m "🗑️  delete: $(basename ${file})"
 
 **Examples:**
 ```lisp
-(delete "memories/2026-01-20-obsolete-idea-💡.md")
+(delete "mementum/memories/obsolete-idea.md")
 (delete "HEAD~2")
 ```
 
-**Note:** Deleted memories remain in git history. Use `git log --all -- memories/` to view deleted files.
+**Note:** Deleted files remain in git history. Use `git log --all -- mementum/memories/deleted-file.md` to recover.
 
 ---
 
-### 8. LIST - Show memories
+### 8. LIST - Show files
 
 ```lisp
 (list)
 (list 💡)
+(list "mementum/knowledge/")
 ```
 
 **Parameters:**
-- `symbol` - Filter by symbol (optional)
+- `filter` - Symbol (searches content) or path (lists directory). Optional.
 
 **Maps to:**
 ```bash
-ls -t memories/            # All memories, newest first
-ls -t memories/*-💡.md     # Filter by symbol
+# No filter — list all memories
+ls -t mementum/memories/
+
+# Symbol filter — grep content across both tiers
+grep -rl "💡" mementum/memories/ mementum/knowledge/ 2>/dev/null
+
+# Path filter — list specific directory
+ls -t mementum/knowledge/
 ```
 
 **Examples:**
 ```lisp
 (list)
 (list 💡)
-(list 🔄)
+(list 🎯)
+(list "mementum/knowledge/")
 ```
 
 ---
@@ -243,7 +278,7 @@ ls -t memories/*-💡.md     # Filter by symbol
 ```clojure
 {:success true
  :result "..."
- :file "memories/2026-01-28-example-💡.md"
+ :file "mementum/memories/example.md"
  :commit "abc123"}
 ```
 
@@ -262,7 +297,7 @@ ls -t memories/*-💡.md     # Filter by symbol
  :error "constraint-violation"
  :field :symbol
  :value "💀"
- :expected "one of: 💡 🔄 🎯 🌀"
+ :expected "one of: 💡 🔄 🎯 🌀 ❌ ✅ 🔁"
  :suggestion "(create 💡 \"slug\" \"content\")"}
 ```
 
@@ -280,13 +315,13 @@ ls -t memories/*-💡.md     # Filter by symbol
 ## Constraint Specification
 
 ```clojure
-;; Symbols
-(def symbols #{💡 🔄 🎯 🌀})
+;; Symbols (core set — extensible per domain)
+(def symbols #{"💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"})
 
 ;; Slug (kebab-case)
 (def slug-pattern #"[a-z0-9-]+")
 
-;; Content (< 200 whitespace tokens)
+;; Content (< 200 whitespace tokens, tier-1 only)
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
@@ -347,66 +382,8 @@ ls -t memories/*-💡.md     # Filter by symbol
 <string>   ::= '"' [^"]* '"'
 <number>   ::= [0-9]+
 <symbol>   ::= [a-zA-Z0-9-]+
-<emoji>    ::= 💡 | 🔄 | 🎯 | 🌀
+<emoji>    ::= 💡 | 🔄 | 🎯 | 🌀 | ❌ | ✅ | 🔁
 ```
-
----
-
-## Comparison to v1
-
-| Aspect | v1 (Verbose) | v2 (Simplified) |
-|--------|-------------|-----------------|
-| **Syntax** | `(lambda (create) (symbol 💡) ...)` | `(create 💡 ...)` |
-| **Nesting** | Parameters in sub-lists | Flat arguments |
-| **Verbosity** | ~60 chars | ~30 chars |
-| **Readability** | Formal but verbose | Concise and clear |
-| **Inspired by** | Lisp macros | Nucleus DSL |
-
-**Example comparison:**
-
-```lisp
-;; v1
-(lambda (create)
-  (symbol 💡)
-  (slug "parser")
-  (content "S-expr parser"))
-
-;; v2
-(create 💡 "parser" "S-expr parser")
-```
-
-**Token savings:** 50%+ reduction while maintaining clarity.
-
----
-
-## Implementation Roadmap
-
-### Phase 1: Core Parser
-- [x] Tokenizer (handles strings, symbols, emojis)
-- [ ] S-expression parser
-- [ ] AST generation
-
-### Phase 2: Validation
-- [ ] Constraint checking (symbols, slugs, content length)
-- [ ] Git reference validation
-- [ ] Fibonacci depth validation
-
-### Phase 3: Execution
-- [ ] Git command generation
-- [ ] Safe command execution
-- [ ] Result formatting
-
-### Phase 4: Error Handling
-- [ ] Parse error messages
-- [ ] Constraint violation feedback
-- [ ] Git error interpretation
-- [ ] Self-correction suggestions
-
-### Phase 5: Advanced
-- [ ] Optional parameters (defaults)
-- [ ] Command composition
-- [ ] REPL interface
-- [ ] Batch operations
 
 ---
 
@@ -423,11 +400,14 @@ ls -t memories/*-💡.md     # Filter by symbol
 ; View recently created
 (view "HEAD")
 
+; View working memory
+(view "mementum/state.md")
+
 ; Update a memory with more details
 (update "HEAD" "Using fibonacci depth improves recall efficiency. The phi ratio provides optimal scaling from simple to complex queries.")
 
-; Check history
-(history "memories/" 3)
+; Check history across both tiers
+(history "mementum/" 3)
 
 ; Compare with previous state
 (diff "HEAD~1" "HEAD")
@@ -435,8 +415,11 @@ ls -t memories/*-💡.md     # Filter by symbol
 ; List all insights
 (list 💡)
 
+; List knowledge pages
+(list "mementum/knowledge/")
+
 ; Delete obsolete memory
-(delete "memories/2026-01-20-old-idea-💡.md")
+(delete "mementum/memories/old-idea.md")
 ```
 
 ### Error correction loop
@@ -448,7 +431,7 @@ ls -t memories/*-💡.md     # Filter by symbol
 {:error "constraint-violation"
  :field :symbol
  :value "💀"
- :expected "one of: 💡 🔄 🎯 🌀"}
+ :expected "one of: 💡 🔄 🎯 🌀 ❌ ✅ 🔁"}
 
 ; AI corrects:
 (create 💡 "bad-symbol" "content")

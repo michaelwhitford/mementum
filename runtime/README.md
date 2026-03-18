@@ -38,13 +38,23 @@ chmod +x mementum.clj
 
 ### Operations
 
-#### SEARCH - Query memories
+#### SEARCH - Query memories and repository
 ```bash
 ./mementum.clj '(search "lambda")'
 ./mementum.clj '(search "architecture" 5)'
 ```
 
 Returns temporal (git log) and semantic (git grep) results.
+
+**Search Strategies:**
+
+Symbols act as content-based filters:
+- `(search "query")` - entire repository
+- `(search "💡")` - insights only
+- `(search "architecture 🔄")` - pattern-shifts about architecture
+- `(search "decisions 🎯")` - decisions specifically
+
+The symbol system creates a natural query language built into content itself.
 
 #### CREATE - Store memory
 ```bash
