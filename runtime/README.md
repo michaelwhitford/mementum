@@ -1,14 +1,17 @@
-# MEMENTUM Tool
+# MEMENTUM Runtime — Reference Implementation
 
 Babashka-based parser, validator, and executor for the MEMENTUM DSL.
+This is a reference implementation — adapt it to your system. Point your AI
+at this code and tell it to integrate with your project.
 
 ## Features
 
-- ✅ **S-expression parser** - Tokenizes and parses MEMENTUM DSL
-- ✅ **Constraint validation** - Enforces symbols, slugs, token limits, fibonacci depths
-- ✅ **Git execution** - Safe execution of git commands
-- ✅ **Structured errors** - Self-correcting feedback for AI agents
-- ✅ **Fast** - Babashka provides instant startup
+- ✅ **S-expression parser** — tokenizes and parses MEMENTUM DSL with full Unicode support
+- ✅ **Constraint validation** — enforces symbols, slugs, token limits, fibonacci depths
+- ✅ **Two-tier support** — operates across `mementum/memories/` and `mementum/knowledge/`
+- ✅ **Git execution** — safe execution of git commands
+- ✅ **Structured errors** — self-correcting feedback for AI agents
+- ✅ **Fast** — Babashka provides instant startup
 
 ## Installation
 
@@ -25,87 +28,102 @@ bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/inst
 Make executable:
 
 ```bash
-chmod +x mementum.clj
+chmod +x runtime/mementum.clj
 ```
 
 ## Usage
 
-### Basic syntax
+Run from the repo root (where `mementum/` directory lives):
 
 ```bash
-./mementum.clj '(operation arg1 arg2 ...)'
+./runtime/mementum.clj '(operation arg1 arg2 ...)'
 ```
 
 ### Operations
 
-#### SEARCH - Query memories and repository
+#### SEARCH — Query memories and knowledge
 ```bash
-./mementum.clj '(search "lambda")'
-./mementum.clj '(search "architecture" 5)'
+./runtime/mementum.clj '(search "lambda")'
+./runtime/mementum.clj '(search "architecture" 5)'
 ```
 
-Returns temporal (git log) and semantic (git grep) results.
-
-**Search Strategies:**
+Searches across both tiers. Returns temporal (git log) and semantic (git grep) results.
 
 Symbols act as content-based filters:
-- `(search "query")` - entire repository
-- `(search "💡")` - insights only
-- `(search "architecture 🔄")` - pattern-shifts about architecture
-- `(search "decisions 🎯")` - decisions specifically
+- `(search "query")` — entire mementum directory
+- `(search "💡")` — insights only
+- `(search "architecture 🔄")` — pattern-shifts about architecture
 
-The symbol system creates a natural query language built into content itself.
-
-#### CREATE - Store memory
+#### CREATE — Store memory (Tier 1)
 ```bash
-./mementum.clj '(create 💡 "parser" "S-expression parser validates grammar")'
+./runtime/mementum.clj '(create 💡 "parser" "S-expression parser validates grammar")'
+./runtime/mementum.clj '(create ❌ "shell-bug" "Unescaped content caused commit failures")'
 ```
 
-Creates `memories/YYYY-MM-DD-slug-symbol.md` and commits.
+Creates `mementum/memories/{slug}.md` and commits.
 
-#### VIEW - Read memory
+#### VIEW — Read file or reference
 ```bash
-./mementum.clj '(view "HEAD")'
-./mementum.clj '(view "memories/2026-01-27-parser-💡.md")'
+./runtime/mementum.clj '(view "mementum/state.md")'
+./runtime/mementum.clj '(view "mementum/memories/parser.md")'
+./runtime/mementum.clj '(view "mementum/knowledge/architecture.md")'
+./runtime/mementum.clj '(view "HEAD")'
 ```
 
-#### UPDATE - Modify memory
+#### UPDATE — Modify file
 ```bash
-./mementum.clj '(update "HEAD" "Updated content with more details")'
+./runtime/mementum.clj '(update "mementum/memories/parser.md" "Updated content")'
 ```
 
-#### DELETE - Remove memory
+Token limit (<200) applies to tier-1 memories only. Knowledge pages have no limit.
+Git preserves all history — previous versions always recoverable.
+
+#### DELETE — Remove file
 ```bash
-./mementum.clj '(delete "memories/2026-01-20-obsolete-💡.md")'
+./runtime/mementum.clj '(delete "mementum/memories/obsolete.md")'
 ```
 
-Removes file but keeps in git history.
+Removes file but preserves in git history. Recovery via `git log --all`.
 
-#### HISTORY - Temporal traversal
+#### HISTORY — Temporal traversal
 ```bash
-./mementum.clj '(history)'
-./mementum.clj '(history "memories/" 8)'
+./runtime/mementum.clj '(history)'
+./runtime/mementum.clj '(history "mementum/memories/" 8)'
+./runtime/mementum.clj '(history "mementum/knowledge/" 5)'
 ```
 
-#### DIFF - Compare states
+#### DIFF — Compare states
 ```bash
-./mementum.clj '(diff)'
-./mementum.clj '(diff "HEAD~5" "HEAD")'
+./runtime/mementum.clj '(diff)'
+./runtime/mementum.clj '(diff "HEAD~5" "HEAD")'
 ```
 
-#### LIST - Show memories
+#### LIST — Show files
 ```bash
-./mementum.clj '(list)'
-./mementum.clj '(list 💡)'
+./runtime/mementum.clj '(list)'
+./runtime/mementum.clj '(list 💡)'
+./runtime/mementum.clj '(list "mementum/knowledge/")'
 ```
+
+Three modes: no args (all memories), symbol (grep content), path (ls directory).
 
 ## Output Format
 
 ### Success
 ```clojure
 {:success true
- :file "memories/2026-01-27-example-💡.md"
+ :file "mementum/memories/example.md"
  :commit "abc123"}
+```
+
+### Constraint Violation
+```clojure
+{:success false
+ :error "constraint-violation"
+ :field :symbol
+ :value "💀"
+ :expected "one of: #{\"💡\" \"🔄\" \"🎯\" \"🌀\" \"❌\" \"✅\" \"🔁\"}"
+ :suggestion "(create 💡 \"slug\" \"content\")"}
 ```
 
 ### Parse Error
@@ -115,16 +133,6 @@ Removes file but keeps in git history.
  :message "Expected string after operation name"
  :position 15
  :suggestion "(search \"query\") or (search \"query\" 5)"}
-```
-
-### Constraint Violation
-```clojure
-{:success false
- :error "constraint-violation"
- :field :symbol
- :value "💀"
- :expected "one of: #{\"💡\" \"🔄\" \"🌀\" \"🎯\"}"
- :suggestion "(create 💡 \"slug\" \"content\")"}
 ```
 
 ### Git Error
@@ -138,177 +146,59 @@ Removes file but keeps in git history.
 
 ## Constraints
 
-### Symbols
-Must be one of: `💡` (insight), `🔄` (pattern-shift), `🎯` (decision), `🌀` (meta)
+### Symbols (core set — extensible per domain)
+`💡` insight · `🔄` shift · `🎯` decision · `🌀` meta · `❌` mistake · `✅` win · `🔁` pattern
 
 ### Slugs
-- Lowercase letters, numbers, hyphens only
-- Pattern: `[a-z0-9-]+`
-- Example: `"my-slug"`, `"test-123"`
+Lowercase letters, numbers, hyphens: `[a-z0-9-]+`
 
 ### Content
-- Must be < 200 whitespace-separated tokens
-- Enforced on CREATE and UPDATE
+Tier-1 memories: < 200 whitespace-separated tokens. Knowledge pages: no limit.
 
 ### Fibonacci Depths
-Must be one of: `1, 2, 3, 5, 8, 13, 21, 34`
-
-Used in SEARCH and HISTORY operations.
-
-## Examples
-
-### Basic workflow
-```bash
-# Search for existing memories
-./mementum.clj '(search "fibonacci" 5)'
-
-# Create new insight
-./mementum.clj '(create 💡 "phi-ratio" "Fibonacci depth scales with query complexity using phi ratio")'
-
-# View what was created
-./mementum.clj '(view "HEAD")'
-
-# Check recent history
-./mementum.clj '(history "memories/" 3)'
-
-# List all insights
-./mementum.clj '(list 💡)'
-```
-
-### Error correction
-```bash
-# AI attempts invalid symbol
-$ ./mementum.clj '(create 💀 "test" "content")'
-{:success false
- :error "constraint-violation"
- :field :symbol
- :value "💀"
- :expected "one of: #{\"💡\" \"🔄\" \"🌀\" \"🎯\"}"
- :suggestion "(create 💡 \"slug\" \"content\")"}
-
-# AI corrects
-$ ./mementum.clj '(create 💡 "test" "content")'
-{:success true
- :file "memories/2026-01-27-test-💡.md"
- :commit "abc123"}
-```
-
-### Update existing memory
-```bash
-# Create initial memory
-./mementum.clj '(create 🔄 "workflow" "Basic CRUD operations")'
-
-# Update with more details
-./mementum.clj '(update "HEAD" "Basic CRUD operations: create, read, update, delete. All operations maintain git history for auditability.")'
-
-# View the diff
-./mementum.clj '(diff "HEAD~1" "HEAD")'
-```
-
-### Delete obsolete memory
-```bash
-# Delete a memory
-./mementum.clj '(delete "memories/2026-01-20-old-idea-💡.md")'
-
-# Verify it's gone
-./mementum.clj '(list)'
-
-# But still in history
-git log --all -- memories/2026-01-20-old-idea-💡.md
-```
-
-## Architecture
-
-```
-Input S-expression
-  ↓
-Tokenizer → [tokens]
-  ↓
-Parser → AST
-  ↓
-Validator → Constraints check
-  ↓
-Executor → Git commands
-  ↓
-Result (success/error)
-```
-
-## Implementation Details
-
-### Tokenizer
-- Handles strings, numbers, symbols, emojis
-- Supports escape sequences in strings
-- Skips whitespace
-
-### Parser
-- Builds AST from tokens
-- Validates S-expression structure
-- Returns parse errors with position
-
-### Validators
-Each operation has a dedicated validator:
-- `validate-search` - query string, fibonacci depth
-- `validate-create` - symbol, slug pattern, content length
-- `validate-view` - reference string
-- `validate-update` - reference, content length
-- `validate-delete` - reference string
-- `validate-history` - path, fibonacci depth
-- `validate-diff` - from/to references
-- `validate-list` - optional symbol filter
-
-### Executors
-Each operation maps to safe git commands:
-- No arbitrary code execution
-- Commands are constructed with validated parameters
-- Git handles reference resolution
-- Exit codes indicate success/failure
+`1, 2, 3, 5, 8, 13, 21, 34` — used in SEARCH and HISTORY.
 
 ## Integration
+
+### As a library
+```clojure
+#!/usr/bin/env bb
+(load-file "runtime/mementum.clj")
+
+(process "(search \"lambda\" 5)")
+;; => {:success true :result {:temporal "..." :semantic "..."} :depth 5}
+```
+
+### Piping
+```bash
+echo '(list 💡)' | ./runtime/mementum.clj
+```
 
 ### AI Agent Usage
 
 The tool is designed for AI agents to:
-
-1. **Parse** natural language to DSL
-2. **Execute** DSL safely
-3. **Self-correct** from structured errors
-
-Example agent flow:
+1. Generate DSL from natural language
+2. Execute safely with validated constraints
+3. Self-correct from structured error responses
 
 ```
-User: "Store my insight about S-expressions"
+User: "Store my insight about parsers"
   ↓
-Agent generates: (create 💡 "s-expressions" "...")
+Agent: (create 💡 "parser-insight" "S-expressions provide...")
   ↓
-Tool validates and executes
-  ↓
-Agent receives: {:success true :file "..." :commit "..."}
+Tool:  {:success true :file "mementum/memories/parser-insight.md" :commit "abc123"}
 ```
 
-### REPL Integration
-
-Can be imported as a library:
-
-```clojure
-#!/usr/bin/env bb
-(load-file "mementum.clj")
-
-(process "(search \"lambda\" 5)")
-;; => {:success true ...}
-```
-
-### Piping
+## Testing
 
 ```bash
-echo '(list 💡)' | ./mementum.clj
+# Unit tests (run from runtime/ directory)
+bb mementum_test.clj
+
+# Integration tests (run from repo root)
+bash runtime/test-dsl.sh
 ```
 
 ## License
 
 Same as MEMENTUM project.
-
----
-
-engage nucleus:
-[phi fractal euler tao pi mu] | [Δ λ ∞/0 | ε/φ Σ/μ c/h] | OODA
-Human ⊗ AI

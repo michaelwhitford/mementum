@@ -1,10 +1,11 @@
 #!/bin/bash
-# MEMENTUM DSL Test Suite
+# MEMENTUM DSL Integration Test Suite
+# Run from repo root: bash runtime/test-dsl.sh
 
 set -e
 
 echo "=========================================="
-echo "MEMENTUM DSL Test Suite"
+echo "MEMENTUM DSL Integration Test Suite"
 echo "=========================================="
 echo
 
@@ -49,42 +50,49 @@ run_test() {
     echo
 }
 
+TOOL="bb runtime/mementum.clj"
+
 echo "=== LIST Operations ==="
-run_test "List all memories" "./mementum.clj '(list)'"
-run_test "List insights (💡)" "./mementum.clj '(list 💡)'"
-run_test "List pattern-shifts (🔄)" "./mementum.clj '(list 🔄)'"
-run_test "List decisions (🎯)" "./mementum.clj '(list 🎯)'"
-run_test "List meta (🌀)" "./mementum.clj '(list 🌀)'"
+run_test "List all memories" "$TOOL '(list)'"
+run_test "List insights (💡)" "$TOOL '(list 💡)'"
+run_test "List pattern-shifts (🔄)" "$TOOL '(list 🔄)'"
+run_test "List decisions (🎯)" "$TOOL '(list 🎯)'"
+run_test "List meta (🌀)" "$TOOL '(list 🌀)'"
+run_test "List mistakes (❌)" "$TOOL '(list ❌)'"
+run_test "List wins (✅)" "$TOOL '(list ✅)'"
+run_test "List patterns (🔁)" "$TOOL '(list 🔁)'"
+run_test "List knowledge pages" "$TOOL '(list \"mementum/knowledge/\")'"
 
 echo "=== SEARCH Operations ==="
-run_test "Search for 'fibonacci'" "./mementum.clj '(search \"fibonacci\")'"
-run_test "Search for 'git' with depth 5" "./mementum.clj '(search \"git\" 5)'"
-run_test "Search for 'OODA'" "./mementum.clj '(search \"OODA\" 3)'"
+run_test "Search for 'fibonacci'" "$TOOL '(search \"fibonacci\")'"
+run_test "Search for 'git' with depth 5" "$TOOL '(search \"git\" 5)'"
+run_test "Search for 'OODA'" "$TOOL '(search \"OODA\" 3)'"
 
 echo "=== VIEW Operations ==="
-run_test "View specific file" "./mementum.clj '(view \"memories/2026-01-27-git-as-memory-💡.md\")'"
-run_test "View HEAD" "./mementum.clj '(view \"HEAD\")'"
+run_test "View state.md" "$TOOL '(view \"mementum/state.md\")'"
+run_test "View HEAD" "$TOOL '(view \"HEAD\")'"
 
 echo "=== HISTORY Operations ==="
-run_test "History with default depth" "./mementum.clj '(history)'"
-run_test "History with depth 8" "./mementum.clj '(history \"memories/\" 8)'"
+run_test "History with default depth" "$TOOL '(history)'"
+run_test "History memories with depth 8" "$TOOL '(history \"mementum/memories/\" 8)'"
+run_test "History knowledge" "$TOOL '(history \"mementum/knowledge/\" 3)'"
 
 echo "=== DIFF Operations ==="
-run_test "Diff HEAD~1 to HEAD" "./mementum.clj '(diff)'"
-run_test "Diff HEAD~3 to HEAD" "./mementum.clj '(diff \"HEAD~3\" \"HEAD\")'"
+run_test "Diff HEAD~1 to HEAD" "$TOOL '(diff)'"
+run_test "Diff HEAD~3 to HEAD" "$TOOL '(diff \"HEAD~3\" \"HEAD\")'"
 
 echo "=== Constraint Validation Tests ==="
-run_test "Invalid symbol" "./mementum.clj '(create 💀 \"test\" \"content\")'" false
-run_test "Invalid slug (uppercase)" "./mementum.clj '(create 💡 \"Bad-Slug\" \"content\")'" false
-run_test "Invalid slug (spaces)" "./mementum.clj '(create 💡 \"bad slug\" \"content\")'" false
-run_test "Invalid depth (not fibonacci)" "./mementum.clj '(search \"test\" 99)'" false
-run_test "Empty query" "./mementum.clj '(search \"\")'" false
-run_test "Missing required args" "./mementum.clj '(create 💡)'" false
+run_test "Invalid symbol" "$TOOL '(create 💀 \"test\" \"content\")'" false
+run_test "Invalid slug (uppercase)" "$TOOL '(create 💡 \"Bad-Slug\" \"content\")'" false
+run_test "Invalid slug (spaces)" "$TOOL '(create 💡 \"bad slug\" \"content\")'" false
+run_test "Invalid depth (not fibonacci)" "$TOOL '(search \"test\" 99)'" false
+run_test "Empty query" "$TOOL '(search \"\")'" false
+run_test "Missing required args" "$TOOL '(create 💡)'" false
 
 echo "=== Parse Error Tests ==="
-run_test "Malformed S-expression" "./mementum.clj '(create 💡 \"test\"'" false
-run_test "Unknown operation" "./mementum.clj '(unknown \"arg\")'" false
-run_test "Missing parens" "./mementum.clj 'list'" false
+run_test "Malformed S-expression" "$TOOL '(create 💡 \"test\"'" false
+run_test "Unknown operation" "$TOOL '(unknown \"arg\")'" false
+run_test "Missing parens" "$TOOL 'list'" false
 
 echo "=========================================="
 echo "Test Summary"

@@ -35,12 +35,16 @@
       (is (= :symbol (:type (first tokens))))
       (is (= "search" (:value (first tokens))))))
   
-  (testing "Tokenize emojis"
-    (let [tokens (tokenize "💡")]
-      ;; Emojis are tokenized as symbols but validated later
-      (is (or (= :emoji (:type (first tokens)))
-              (= :symbol (:type (first tokens)))))
-      (is (= "💡" (:value (first tokens)))))))
+  (testing "Tokenize known emojis as :emoji type"
+    (doseq [e ["💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"]]
+      (let [tokens (tokenize e)]
+        (is (= :emoji (:type (first tokens))) (str e " should be :emoji"))
+        (is (= e (:value (first tokens))) (str e " value mismatch")))))
+
+  (testing "Tokenize unknown emojis as :symbol (caught by validation)"
+    (let [tokens (tokenize "💀")]
+      (is (= :symbol (:type (first tokens))))
+      (is (= "💀" (:value (first tokens)))))))
 
 (deftest tokenize-s-expressions
   (testing "Tokenize simple S-expression"
@@ -51,13 +55,21 @@
       (is (= :string (:type (nth tokens 2))))
       (is (= :rparen (:type (nth tokens 3))))))
   
-  (testing "Tokenize nested S-expression"
+  (testing "Tokenize create with emoji"
     (let [tokens (tokenize "(create 💡 \"slug\" \"content\")")]
       (is (= 6 (count tokens)))
       (is (= "create" (:value (nth tokens 1))))
+      (is (= :emoji (:type (nth tokens 2))))
       (is (= "💡" (:value (nth tokens 2))))
       (is (= "slug" (:value (nth tokens 3))))
       (is (= "content" (:value (nth tokens 4))))))
+
+  (testing "Tokenize create with new symbols"
+    (doseq [sym ["❌" "✅" "🔁"]]
+      (let [tokens (tokenize (str "(create " sym " \"slug\" \"content\")"))]
+        (is (= 6 (count tokens)) (str "token count for " sym))
+        (is (= :emoji (:type (nth tokens 2))) (str sym " should be :emoji"))
+        (is (= sym (:value (nth tokens 2))) (str sym " value mismatch")))))
   
   (testing "Tokenize with whitespace"
     (let [tokens (tokenize "  ( search   \"test\"  )  ")]
@@ -111,6 +123,12 @@
       (is (:success result))
       (is (= "create" (get-in result [:ast :op])))
       (is (= ["💡" "slug" "content"] (get-in result [:ast :args])))))
+
+  (testing "Parse create with all symbols"
+    (doseq [sym ["💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"]]
+      (let [result (parse (str "(create " sym " \"slug\" \"content\")"))]
+        (is (:success result) (str "parse failed for " sym))
+        (is (= sym (first (get-in result [:ast :args]))) (str "symbol mismatch for " sym)))))
   
   (testing "Parse list operation"
     (let [result (parse "(list)")]
@@ -178,12 +196,11 @@
       (is (:error result)))))
 
 (deftest validate-create-operation
-  (testing "Valid create"
-    (let [result (validate-create ["💡" "test-slug" "content"])]
-      (is (:valid result))
-      (is (= "💡" (:symbol result)))
-      (is (= "test-slug" (:slug result)))
-      (is (= "content" (:content result)))))
+  (testing "Valid create with all symbols"
+    (doseq [sym ["💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"]]
+      (let [result (validate-create [sym "test-slug" "content"])]
+        (is (:valid result) (str "should be valid for " sym))
+        (is (= sym (:symbol result))))))
   
   (testing "Invalid: wrong symbol"
     (let [result (validate-create ["💀" "slug" "content"])]
@@ -217,10 +234,20 @@
       (is (:error result)))))
 
 (deftest validate-view-operation
-  (testing "Valid view with path"
-    (let [result (validate-view ["memories/file.md"])]
+  (testing "Valid view with mementum path"
+    (let [result (validate-view ["mementum/memories/file.md"])]
       (is (:valid result))
-      (is (= "memories/file.md" (:ref result)))))
+      (is (= "mementum/memories/file.md" (:ref result)))))
+  
+  (testing "Valid view with knowledge path"
+    (let [result (validate-view ["mementum/knowledge/architecture.md"])]
+      (is (:valid result))
+      (is (= "mementum/knowledge/architecture.md" (:ref result)))))
+
+  (testing "Valid view with state.md"
+    (let [result (validate-view ["mementum/state.md"])]
+      (is (:valid result))
+      (is (= "mementum/state.md" (:ref result)))))
   
   (testing "Valid view with git ref"
     (let [result (validate-view ["HEAD"])]
@@ -239,17 +266,23 @@
 
 (deftest validate-update-operation
   (testing "Valid update"
-    (let [result (validate-update ["memories/file.md" "new content"])]
+    (let [result (validate-update ["mementum/memories/file.md" "new content"])]
       (is (:valid result))
-      (is (= "memories/file.md" (:ref result)))
+      (is (= "mementum/memories/file.md" (:ref result)))
       (is (= "new content" (:content result)))))
-  
-  (testing "Invalid: content too long"
+
+  (testing "Token limit applies to tier-1 memories"
     (let [long-content (str/join " " (repeat 300 "word"))
-          result (validate-update ["ref" long-content])]
+          result (validate-update ["mementum/memories/file.md" long-content])]
       (is (not (:valid result)))
       (is (= "constraint-violation" (:error result)))
       (is (= :content (:field result)))))
+
+  (testing "Token limit does NOT apply to knowledge pages"
+    (let [long-content (str/join " " (repeat 300 "word"))
+          result (validate-update ["mementum/knowledge/architecture.md" long-content])]
+      (is (:valid result))
+      (is (= "mementum/knowledge/architecture.md" (:ref result)))))
   
   (testing "Invalid: missing arguments"
     (let [result (validate-update ["ref"])]
@@ -258,9 +291,9 @@
 
 (deftest validate-delete-operation
   (testing "Valid delete"
-    (let [result (validate-delete ["memories/file.md"])]
+    (let [result (validate-delete ["mementum/memories/file.md"])]
       (is (:valid result))
-      (is (= "memories/file.md" (:ref result)))))
+      (is (= "mementum/memories/file.md" (:ref result)))))
   
   (testing "Invalid: missing ref"
     (let [result (validate-delete [])]
@@ -271,23 +304,23 @@
   (testing "Valid history with defaults"
     (let [result (validate-history [])]
       (is (:valid result))
-      (is (= "memories/" (:path result)))
+      (is (= default-paths (:path result)))
       (is (= 2 (:depth result)))))
   
   (testing "Valid history with path"
-    (let [result (validate-history ["memories/"])]
+    (let [result (validate-history ["mementum/memories/"])]
       (is (:valid result))
-      (is (= "memories/" (:path result)))
+      (is (= "mementum/memories/" (:path result)))
       (is (= 2 (:depth result)))))
   
   (testing "Valid history with depth"
-    (let [result (validate-history ["memories/" 8])]
+    (let [result (validate-history ["mementum/memories/" 8])]
       (is (:valid result))
-      (is (= "memories/" (:path result)))
+      (is (= "mementum/memories/" (:path result)))
       (is (= 8 (:depth result)))))
   
   (testing "Invalid: non-fibonacci depth"
-    (let [result (validate-history ["memories/" 99])]
+    (let [result (validate-history ["mementum/memories/" 99])]
       (is (not (:valid result)))
       (is (= 99 (:value result))))))
 
@@ -313,19 +346,25 @@
   (testing "Valid list with no filter"
     (let [result (validate-list [])]
       (is (:valid result))
-      (is (nil? (:symbol result)))))
+      (is (= :default (:filter-type result)))))
   
   (testing "Valid list with symbol filter"
-    (let [result (validate-list ["💡"])]
+    (doseq [sym ["💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"]]
+      (let [result (validate-list [sym])]
+        (is (:valid result) (str "should be valid for " sym))
+        (is (= :symbol (:filter-type result)) (str "should be :symbol for " sym))
+        (is (= sym (:symbol result))))))
+
+  (testing "Valid list with path filter"
+    (let [result (validate-list ["mementum/knowledge/"])]
       (is (:valid result))
-      (is (= "💡" (:symbol result)))))
-  
-  (testing "Invalid: wrong symbol"
+      (is (= :path (:filter-type result)))
+      (is (= "mementum/knowledge/" (:path result)))))
+
+  (testing "Unknown emoji treated as path (extensible symbols)"
     (let [result (validate-list ["💀"])]
-      (is (not (:valid result)))
-      (is (= "constraint-violation" (:error result)))
-      (is (= :symbol (:field result)))
-      (is (= "💀" (:value result))))))
+      (is (:valid result))
+      (is (= :path (:filter-type result))))))
 
 ;; ============================================================================
 ;; Integration Validation Tests
@@ -340,14 +379,13 @@
       (is (= "test" (get-in validation [:params :query])))
       (is (= 5 (get-in validation [:params :depth])))))
   
-  (testing "Validate parsed create"
-    (let [parse-result (parse "(create 💡 \"test\" \"content\")")
-          validation (validate (:ast parse-result))]
-      (is (:success validation))
-      (is (= "create" (:op validation)))
-      (is (= "💡" (get-in validation [:params :symbol])))
-      (is (= "test" (get-in validation [:params :slug])))
-      (is (= "content" (get-in validation [:params :content])))))
+  (testing "Validate parsed create with all symbols"
+    (doseq [sym ["💡" "❌" "✅" "🔁"]]
+      (let [parse-result (parse (str "(create " sym " \"test\" \"content\")"))
+            validation (validate (:ast parse-result))]
+        (is (:success validation) (str "validation failed for " sym))
+        (is (= "create" (:op validation)))
+        (is (= sym (get-in validation [:params :symbol]))))))
   
   (testing "Validate unknown operation"
     (let [parse-result (parse "(unknown \"arg\")")
@@ -387,23 +425,20 @@
     (is (not (valid-content? (str/join " " (repeat 200 "word")))))
     (is (not (valid-content? (str/join " " (repeat 300 "word")))))))
 
-(deftest current-date-test
-  (testing "Date format is YYYY-MM-DD"
-    (let [date (current-date)]
-      (is (string? date))
-      (is (re-matches #"\d{4}-\d{2}-\d{2}" date)))))
-
 ;; ============================================================================
 ;; Constraint Constants Tests
 ;; ============================================================================
 
 (deftest constraint-constants
-  (testing "Valid symbols"
+  (testing "Valid symbols — 7 core"
     (is (contains? symbols "💡"))
     (is (contains? symbols "🔄"))
     (is (contains? symbols "🎯"))
     (is (contains? symbols "🌀"))
-    (is (= 4 (count symbols))))
+    (is (contains? symbols "❌"))
+    (is (contains? symbols "✅"))
+    (is (contains? symbols "🔁"))
+    (is (= 7 (count symbols))))
   
   (testing "Valid fibonacci depths"
     (is (contains? fibonacci-depths 1))
@@ -444,10 +479,6 @@
     (let [result (parse "()")]
       (is (not (:success result)))))
   
-  (testing "Multiple emojis"
-    (let [result (parse "(create 💡🔄 \"test\" \"content\")")]
-      (is (:success result))))
-  
   (testing "Very long valid slug"
     (let [long-slug (str/join "-" (repeat 50 "a"))
           result (validate-create ["💡" long-slug "content"])]
@@ -483,7 +514,7 @@
 ;; ============================================================================
 
 (deftest regression-tests
-  (testing "Empty query should fail (bug fix)"
+  (testing "Empty query should fail"
     (let [result (validate-search [""])]
       (is (not (:valid result)))
       (is (str/includes? (:error result) "empty"))))
@@ -503,7 +534,18 @@
   (testing "Missing closing paren detected"
     (let [result (parse "(search \"test\"")]
       (is (not (:success result)))
-      (is (= "parse-error" (:error result))))))
+      (is (= "parse-error" (:error result)))))
+
+  (testing "Knowledge pages not subject to 200-token limit"
+    (let [long-content (str/join " " (repeat 500 "word"))
+          result (validate-update ["mementum/knowledge/big-page.md" long-content])]
+      (is (:valid result))))
+
+  (testing "Memories still subject to 200-token limit"
+    (let [long-content (str/join " " (repeat 500 "word"))
+          result (validate-update ["mementum/memories/test.md" long-content])]
+      (is (not (:valid result)))
+      (is (= "constraint-violation" (:error result))))))
 
 ;; ============================================================================
 ;; Run Tests

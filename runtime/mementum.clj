@@ -1,6 +1,8 @@
 #!/usr/bin/env bb
-;; MEMENTUM DSL - Parser, Validator, and Executor
-;; Usage: ./mementum.clj '(create 💡 "slug" "content")'
+;; MEMENTUM DSL - Reference Implementation
+;; Parser, Validator, and Executor for the MEMENTUM git memory protocol.
+;; Run from repo root: ./runtime/mementum.clj '(create 💡 "slug" "content")'
+;; See GRAMMAR.md for the full specification.
 
 (require '[clojure.string :as str]
          '[clojure.java.shell :as shell]
@@ -10,7 +12,7 @@
 ;; Constants & Constraints
 ;; ============================================================================
 
-(def symbols #{"💡" "🔄" "🎯" "🌀"})
+(def symbols #{"💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"})
 
 (def fibonacci-depths #{1 2 3 5 8 13 21 34})
 
@@ -32,12 +34,6 @@
   [s]
   (< (token-count s) 200))
 
-(defn current-date
-  "Get current date in YYYY-MM-DD format"
-  []
-  (let [now (java.time.LocalDate/now)]
-    (str now)))
-
 (defn run-command
   "Execute shell command and return result"
   [cmd]
@@ -55,8 +51,23 @@
 ;; Tokenizer
 ;; ============================================================================
 
+(defn- match-emoji
+  "Check if input at position i starts with any known emoji.
+   Returns the matched emoji string or nil. Checks longest first
+   to handle multi-codepoint sequences (e.g. 🗑️ = U+1F5D1 U+FE0F)."
+  [input i]
+  (some (fn [sym]
+          (when (and (<= (+ i (count sym)) (count input))
+                     (= sym (subs input i (+ i (count sym)))))
+            sym))
+        ;; Sort by length descending so multi-codepoint emojis match first
+        (sort-by (comp - count) symbols)))
+
 (defn tokenize
-  "Convert input string to tokens"
+  "Convert input string to tokens.
+   Handles Unicode correctly — emoji detection uses string-prefix matching
+   rather than char-by-char comparison, so surrogate pairs and multi-codepoint
+   sequences (variation selectors, ZWJ) work properly."
   [input]
   (let [input (str/trim input)]
     (loop [i 0
@@ -124,21 +135,22 @@
                         (Long/parseLong num-str))]
               (recur end (conj tokens {:type :number :value num})))
             
-            ;; Emoji symbols
-            (contains? symbols (str ch))
-            (recur (inc i) (conj tokens {:type :emoji :value (str ch)}))
-            
-            ;; Symbol/word
+            ;; Emoji or Symbol/word
+            ;; Try emoji first (string-prefix match handles surrogate pairs,
+            ;; variation selectors, ZWJ sequences). Unknown emojis fall through
+            ;; to word scanner and get caught by validation.
             :else
-            (let [start i
-                  end (loop [j i]
-                        (if (and (< j (count input))
-                                 (not (Character/isWhitespace (get input j)))
-                                 (not (contains? #{\( \) \"} (get input j))))
-                          (recur (inc j))
-                          j))
-                  sym (subs input start end)]
-              (recur end (conj tokens {:type :symbol :value sym})))))))))
+            (if-let [emoji (match-emoji input i)]
+              (recur (+ i (count emoji)) (conj tokens {:type :emoji :value emoji}))
+              (let [start i
+                    end (loop [j i]
+                          (if (and (< j (count input))
+                                   (not (Character/isWhitespace (get input j)))
+                                   (not (contains? #{\( \) \"} (get input j))))
+                            (recur (inc j))
+                            j))
+                    sym (subs input start end)]
+                (recur end (conj tokens {:type :symbol :value sym}))))))))))
 
 ;; ============================================================================
 ;; Parser
@@ -298,18 +310,26 @@
   (cond
     (empty? args)
     {:error "view requires a reference"
-     :suggestion "(view \"memories/file.md\") or (view \"HEAD\")"}
+     :suggestion "(view \"mementum/memories/file.md\") or (view \"HEAD\")"}
     
     (not (string? (first args)))
     {:error "view reference must be a string"
-     :suggestion "(view \"memories/file.md\")"}
+     :suggestion "(view \"mementum/memories/file.md\")"}
     
     :else
     {:valid true
      :ref (first args)}))
 
+(defn- memory-ref?
+  "Check if a reference points to a tier-1 memory (subject to token limit)"
+  [ref]
+  (or (str/starts-with? ref "mementum/memories/")
+      ;; Git refs (HEAD, hashes) are ambiguous — apply token limit conservatively
+      (not (str/starts-with? ref "mementum/knowledge/"))))
+
 (defn validate-update
-  "Validate update operation"
+  "Validate update operation.
+   Token limit (<200) applies only to tier-1 memories, not knowledge pages."
   [args]
   (cond
     (< (count args) 2)
@@ -318,18 +338,19 @@
     
     (not (string? (first args)))
     {:error "update reference must be a string"
-     :suggestion "(update \"memories/file.md\" \"content\")"}
+     :suggestion "(update \"mementum/memories/file.md\" \"content\")"}
     
     (not (string? (second args)))
     {:error "content must be a string"
      :suggestion "(update \"path\" \"content\")"}
     
-    (not (valid-content? (second args)))
+    (and (memory-ref? (first args))
+         (not (valid-content? (second args))))
     {:error "constraint-violation"
      :field :content
      :value (str (token-count (second args)) " tokens")
-     :expected "< 200 tokens"
-     :suggestion "Reduce content length"}
+     :expected "< 200 tokens (tier-1 memories only)"
+     :suggestion "Reduce content length, or use a knowledge page for longer content"}
     
     :else
     {:valid true
@@ -342,15 +363,17 @@
   (cond
     (empty? args)
     {:error "delete requires a reference"
-     :suggestion "(delete \"memories/file.md\")"}
+     :suggestion "(delete \"mementum/memories/file.md\")"}
     
     (not (string? (first args)))
     {:error "delete reference must be a string"
-     :suggestion "(delete \"memories/file.md\")"}
+     :suggestion "(delete \"mementum/memories/file.md\")"}
     
     :else
     {:valid true
      :ref (first args)}))
+
+(def default-paths "mementum/memories/ mementum/knowledge/")
 
 (defn validate-history
   "Validate history operation"
@@ -359,23 +382,23 @@
     (and (> (count args) 0)
          (not (string? (first args))))
     {:error "history path must be a string"
-     :suggestion "(history \"memories/\")"}
+     :suggestion "(history \"mementum/memories/\")"}
     
     (and (> (count args) 1)
          (not (number? (second args))))
     {:error "history depth must be a number"
-     :suggestion "(history \"memories/\" 5)"}
+     :suggestion "(history \"mementum/memories/\" 5)"}
     
     (and (> (count args) 1)
          (not (contains? fibonacci-depths (second args))))
     {:error "history depth must be fibonacci"
      :expected (str "one of: " (sort fibonacci-depths))
      :value (second args)
-     :suggestion "(history \"memories/\" 5)"}
+     :suggestion "(history \"mementum/memories/\" 5)"}
     
     :else
     {:valid true
-     :path (or (first args) "memories/")
+     :path (or (first args) default-paths)
      :depth (or (second args) 2)}))
 
 (defn validate-diff
@@ -398,20 +421,34 @@
      :to (or (second args) "HEAD")}))
 
 (defn validate-list
-  "Validate list operation"
+  "Validate list operation.
+   Accepts emoji (symbol filter via content grep) or string (path filter)."
   [args]
   (cond
-    (and (> (count args) 0)
-         (not (contains? symbols (first args))))
-    {:error "constraint-violation"
-     :field :symbol
-     :value (first args)
-     :expected (str "one of: " symbols)
-     :suggestion "(list 💡)"}
-    
-    :else
+    ;; No args — list all memories
+    (empty? args)
     {:valid true
-     :symbol (first args)}))
+     :filter-type :default}
+    
+    ;; Known symbol — filter by content grep (emojis are strings in the AST)
+    (contains? symbols (first args))
+    {:valid true
+     :filter-type :symbol
+     :symbol (first args)}
+    
+    ;; String arg — path filter (e.g. "mementum/knowledge/")
+    (string? (first args))
+    {:valid true
+     :filter-type :path
+     :path (first args)}
+    
+    ;; Unknown non-string arg
+    :else
+    {:error "constraint-violation"
+     :field :filter
+     :value (first args)
+     :expected (str "symbol (" symbols ") or path string")
+     :suggestion "(list 💡) or (list \"mementum/knowledge/\")"}))
 
 (defn validate
   "Validate AST"
@@ -447,20 +484,22 @@
 ;; ============================================================================
 
 (defn resolve-ref
-  "Resolve git reference to file path"
+  "Resolve git reference to file path.
+   If ref is already a mementum/ path, use it directly.
+   Otherwise resolve via git show against both tiers."
   [ref]
-  (if (str/starts-with? ref "memories/")
+  (if (str/starts-with? ref "mementum/")
     ref
-    (let [result (run-command (str "git show " ref " --name-only 2>/dev/null | grep memories/ | head -1"))]
-      (if (:success result)
+    (let [result (run-command (str "git show " ref " --name-only 2>/dev/null | grep -E 'mementum/(memories|knowledge)/' | head -1"))]
+      (if (and (:success result) (not (str/blank? (:stdout result))))
         (str/trim (:stdout result))
         ref))))
 
 (defn exec-search
   "Execute search operation"
   [{:keys [query depth]}]
-  (let [log-cmd (str "git log -n " depth " --grep \"" query "\" --pretty=format:\"%h %ad %s\" --date=short -- memories/")
-        grep-cmd (str "git grep -i \"" query "\" || true")
+  (let [log-cmd (str "git log -n " depth " --grep \"" query "\" --pretty=format:\"%h %ad %s\" --date=short -- mementum/memories/ mementum/knowledge/")
+        grep-cmd (str "git grep -i \"" query "\" -- mementum/ || true")
         log-result (run-command log-cmd)
         grep-result (run-command grep-cmd)]
     {:success true
@@ -471,10 +510,8 @@
 (defn exec-create
   "Execute create operation"
   [{:keys [symbol slug content]}]
-  (let [date (current-date)
-        filename (str date "-" slug "-" symbol ".md")
-        filepath (str "memories/" filename)
-        create-cmd (str "mkdir -p memories && "
+  (let [filepath (str "mementum/memories/" slug ".md")
+        create-cmd (str "mkdir -p mementum/memories && "
                        "echo \"" (str/replace content "\"" "\\\"") "\" > " filepath " && "
                        "git add " filepath " && "
                        "git commit -m \"" symbol " " slug "\"")]
@@ -492,8 +529,8 @@
 (defn exec-view
   "Execute view operation"
   [{:keys [ref]}]
-  (let [;; If ref is a file path, just cat it; otherwise use git show
-        cmd (if (str/starts-with? ref "memories/")
+  (let [;; If ref is a mementum/ file path, cat it; otherwise use git show
+        cmd (if (str/starts-with? ref "mementum/")
               (str "cat " ref)
               (str "git show " ref))
         result (run-command cmd)]
@@ -543,9 +580,14 @@
          :suggestion "Check if file exists"}))))
 
 (defn exec-history
-  "Execute history operation"
+  "Execute history operation.
+   Uses --follow for single files, omits it for directories/multi-path."
   [{:keys [path depth]}]
-  (let [cmd (str "git log -n " depth " --follow --pretty=format:\"%h %ad %s\" --date=short -- " path)
+  (let [use-follow (and (not (str/ends-with? path "/"))
+                        (not (str/includes? path " ")))
+        cmd (str "git log -n " depth
+                 (when use-follow " --follow")
+                 " --pretty=format:\"%h %ad %s\" --date=short -- " path)
         result (run-command cmd)]
     (if (:success result)
       {:success true
@@ -558,9 +600,9 @@
        :stderr (:stderr result)})))
 
 (defn exec-diff
-  "Execute diff operation"
+  "Execute diff operation across both tiers"
   [{:keys [from to]}]
-  (let [cmd (str "git diff " from " " to " -- memories/")
+  (let [cmd (str "git diff " from " " to " -- mementum/memories/ mementum/knowledge/")
         result (run-command cmd)]
     {:success true
      :result (:stdout result)
@@ -568,15 +610,21 @@
      :to to}))
 
 (defn exec-list
-  "Execute list operation"
-  [{:keys [symbol]}]
-  (let [cmd (if symbol
-              (str "ls -t memories/*-" symbol ".md 2>/dev/null || true")
-              "ls -t memories/ 2>/dev/null || true")
+  "Execute list operation.
+   Supports three modes: default (all memories), symbol (grep content), path (ls directory)."
+  [{:keys [filter-type symbol path]}]
+  (let [cmd (case filter-type
+              :symbol (str "grep -rl \"" symbol "\" mementum/memories/ mementum/knowledge/ 2>/dev/null || true")
+              :path   (str "ls -t " path " 2>/dev/null || true")
+              ;; :default
+              (str "ls -t mementum/memories/ 2>/dev/null || true"))
         result (run-command cmd)]
     {:success true
      :result (:stdout result)
-     :filter (when symbol (str "symbol: " symbol))}))
+     :filter (case filter-type
+               :symbol (str "symbol: " symbol)
+               :path   (str "path: " path)
+               nil)}))
 
 (defn execute
   "Execute validated operation"
@@ -610,14 +658,21 @@
   (if (empty? args)
     (do
       (println "MEMENTUM DSL - Parser, Validator, and Executor")
+      (println "Reference implementation of the MEMENTUM git memory protocol.")
       (println)
       (println "Usage: ./mementum.clj '(operation args...)'")
+      (println "  Run from repo root (where mementum/ directory lives).")
       (println)
       (println "Examples:")
-      (println "  ./mementum.clj '(search \"lambda\" 5)'")
-      (println "  ./mementum.clj '(create 💡 \"test\" \"My insight\")'")
+      (println "  ./mementum.clj '(search \"architecture\" 5)'")
+      (println "  ./mementum.clj '(create 💡 \"my-insight\" \"What I learned\")'")
+      (println "  ./mementum.clj '(view \"mementum/state.md\")'")
       (println "  ./mementum.clj '(list 💡)'")
-      (println "  ./mementum.clj '(view \"HEAD\")'")
+      (println "  ./mementum.clj '(list \"mementum/knowledge/\")'")
+      (println "  ./mementum.clj '(update \"mementum/memories/my-insight.md\" \"Updated content\")'")
+      (println "  ./mementum.clj '(delete \"mementum/memories/obsolete.md\")'")
+      (println "  ./mementum.clj '(history)'")
+      (println "  ./mementum.clj '(diff)'")
       (System/exit 1))
     (let [input (str/join " " args)
           result (process input)]
