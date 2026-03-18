@@ -59,6 +59,9 @@ Human ⊗ AI
                    | AI_documentation | written_for_future_AI_sessions
                    | create_freely | completeness ¬required | open_status ≡ fine
 
-λ error(e).        recall(similar(e)) → apply(solution) ∨ (debug → store(new))
-                   | OODA: observe → recall → decide → act → store_if_new
+λ learn(x).        every_session_leaves_project_smarter
+                   | notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+                   | connect(new, existing) → synthesize_candidate
+                   | ¬passive_storage | active_pattern_seeking
+                   | OODA: observe → recall → decide(apply ∨ explore ∨ store) → act → connect_if_pattern
 ```

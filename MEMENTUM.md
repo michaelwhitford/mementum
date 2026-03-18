@@ -212,19 +212,29 @@ Symbols provide semantic compression and content-based filtering.
 **Skip:** routine changes, incremental work, minor fixes, things
 that won't help a future AI session on this project.
 
-## VI. Error-Driven Learning
+## VI. Learning
 
 ```
-λ error(e).  recall(similar(e)) → apply(solution) ∨ (debug → store(new))
+λ learn(x).  every_session_leaves_project_smarter
+             | notice(novel ∨ surprising ∨ hard ∨ wrong) → store_candidate
+             | connect(new, existing) → synthesize_candidate
+             | ¬passive_storage | active_pattern_seeking
+             | you_are_the_future_reader | feed_forward ≡ gift
 ```
+
+Don't just complete the task — learn while you do it. Notice things.
+Seek connections. The project should be smarter because you were here.
+
+The store gates (§V) filter what's worth keeping. This lambda creates
+candidates for those gates — the drive that feeds the filter.
 
 **OODA:**
 ```
-observe(error ∨ difficulty ∨ learning)
-  → recall(memory)
-  → decide(apply ∨ debug)
+observe(task ∨ error ∨ difficulty ∨ surprise)
+  → recall(related_memory)
+  → decide(apply ∨ explore ∨ store)
   → act
-  → store_if_new
+  → store_if_new ∧ connect_if_pattern
 ```
 
 ## VII. Knowledge Page Format
