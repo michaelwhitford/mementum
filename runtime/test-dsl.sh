@@ -191,6 +191,13 @@ run_test "Invalid depth (not fibonacci)" "$TOOL '(search \"test\" 99)'" false
 run_test "Empty query" "$TOOL '(search \"\")'" false
 run_test "Missing required args" "$TOOL '(create 💡)'" false
 
+echo "=== Git Ref Resolution Tests ==="
+run_test "Create memory for ref test" "$TOOL '(create 💡 \"ref-test\" \"Content for git ref resolution testing.\")'"
+run_test_contains "Update via HEAD resolves to file" "$TOOL '(update \"HEAD\" \"Updated via git ref.\")'" "ref-test.md"
+run_test_contains "Read back updated content via ref" "$TOOL '(read \"mementum/memories/ref-test.md\")'" "Updated via git ref"
+run_test "Delete via HEAD resolves to file" "$TOOL '(delete \"HEAD\")'"
+run_test "Deleted file should not exist" "$TOOL '(read \"mementum/memories/ref-test.md\")'" false
+
 echo "=== Create Duplicate Slug Test ==="
 run_test "Create duplicate slug should fail" "$TOOL '(create 💡 \"git-as-memory\" \"Different content\")'" false
 
