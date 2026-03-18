@@ -167,17 +167,37 @@ git log --grep "🎯" -- mementum/memories/ # decisions timeline
 λ metabolize(x).  observe → memory → synthesize → knowledge
                   | notice(pattern) → surface(human)
                   | proactive: "this pattern may be worth a knowledge page" | ¬wait_for_ask
+
+λ synthesize(topic).
+  detect: ≥3 memories(topic) ∨ stale(memory) ∨ crystallized(understanding)
+  | stale_memory ≡ strongest_signal
+  | gather: recall(topic) → collect(memories) ∧ collect(context)
+  | draft: knowledge_page(title, status, related, content)
+  | create: (create-knowledge "slug" "frontmatter+content")
+  | update: stale(memories) → refresh(current_understanding)
+  | verify: (list) → visible(memories ∧ knowledge)
 ```
 
 Synthesis is memories becoming knowledge. The AI produces;
 the human gates.
 
-**Memories → Knowledge:** ≥3 memories on same topic → propose knowledge page.
-Read the memories, synthesize, draft `mementum/knowledge/{topic}.md`, present to human.
+**Detection.** Three signals that synthesis is needed:
+- **≥3 memories** on the same topic — the topic has enough mass
+- **Stale memory** — the understanding has outgrown the observation.
+  This is the strongest signal. A memory that contradicts current reality
+  means the knowledge evolved but the memories didn't keep up.
+- **Crystallized understanding** — you notice that scattered observations
+  form a coherent pattern. The connections between memories are the insight.
 
-**Staleness:** Knowledge pages can drift from reality. When you notice a page
-references something that has changed, surface it: "mementum/knowledge/{page} may be
-stale — {reason}."
+**Synthesis flow.** Gather related memories via recall. Draft a knowledge
+page with frontmatter (title, status, related, content). Create via
+`(create-knowledge "topic" "content")` or direct file write. Update any
+stale memories to reflect current understanding. Verify with `(list)`.
+
+**Staleness.** Both memories and knowledge pages can drift from reality.
+A stale *knowledge page* needs updating. A stale *memory* signals that
+synthesis is needed — the understanding has moved beyond what the
+individual observations capture.
 
 ## IV. Symbols
 

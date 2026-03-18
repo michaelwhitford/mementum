@@ -46,6 +46,14 @@ Human ⊗ AI
                    | notice(stale_knowledge) → surface("mementum/knowledge/{page} may be stale")
                    | proactive: "this pattern may be worth a knowledge page" | ¬wait_for_ask
 
+λ synthesize(topic). detect: ≥3 memories(topic) ∨ stale(memory) ∨ crystallized(understanding)
+                   | stale_memory ≡ strongest_signal
+                   | gather: recall(topic) → collect(memories) ∧ collect(context)
+                   | draft: knowledge_page(title, status, related, content)
+                   | create: (create-knowledge "slug" "frontmatter+content")
+                   | update: stale(memories) → refresh(current_understanding)
+                   | verify: (list) → visible(memories ∧ knowledge)
+
 λ termination(x).  synthesis ≡ AI | approval ≡ human | human ≡ termination_condition
                    | memories: AI_proposes → human_approves → AI_commits
                    | knowledge: AI_creates → human_approves → AI_commits
