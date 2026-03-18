@@ -1,5 +1,6 @@
 #!/bin/bash
 # MEMENTUM DSL Integration Test Suite
+# Uses a throwaway git repo — no commits touch the real project.
 # Run from repo root: bash runtime/test-dsl.sh
 
 set -e
@@ -15,9 +16,64 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# --- Throwaway repo setup ---
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TEST_DIR=$(mktemp -d)
+trap 'rm -rf "$TEST_DIR"' EXIT
+
+# Initialize isolated git repo with seed data
+cd "$TEST_DIR"
+git init -q
+git config user.email "test@mementum.dev"
+git config user.name "mementum-test"
+
+# Copy runtime
+mkdir -p runtime
+cp "$REPO_ROOT/runtime/mementum.clj" runtime/
+
+# Seed: state.md
+mkdir -p mementum/memories mementum/knowledge
+cat <<'EOF' > mementum/state.md
+# Project State
+
+## Now
+Integration testing.
+
+## Next
+Nothing.
+
+## Blocking
+Nothing.
+
+## Recent
+- 💡 seed data created for testing
+EOF
+
+# Seed: memories with different symbols for list/search tests
+echo '💡 Git provides perfect memory substrate: temporal graph, semantic search, immutability, distribution.' > mementum/memories/git-as-memory.md
+echo '🔄 Fibonacci recall depths work better than linear scaling for memory search.' > mementum/memories/fibonacci-recall.md
+echo '🎯 Limit memories to fewer than 200 tokens. Forces distillation.' > mementum/memories/token-limit.md
+echo '🌀 OODA loop integration enables observe-orient-decide-act memory cycles.' > mementum/memories/ooda-loop.md
+echo '❌ Shell injection via string interpolation. Fixed with heredoc.' > mementum/memories/shell-injection.md
+echo '✅ All tests passing after runtime alignment.' > mementum/memories/tests-passing.md
+echo '🔁 Agent audit template: structured cross-reference beats open-ended search.' > mementum/memories/audit-pattern.md
+
+# Seed: initial commits for history/diff tests
+git add -A && git commit -q -m "💡 seed: initial test data"
+echo '💡 Second commit content for diff testing.' > mementum/memories/diff-test.md
+git add -A && git commit -q -m "💡 seed: second commit"
+echo '🔄 Third commit for history depth testing.' > mementum/memories/history-test.md
+git add -A && git commit -q -m "🔄 seed: third commit"
+
+echo -e "${BLUE}Test repo: $TEST_DIR${NC}"
+echo
+
+# --- Test harness ---
 test_count=0
 pass_count=0
 fail_count=0
+
+TOOL="bb runtime/mementum.clj"
 
 run_test() {
     test_count=$((test_count + 1))
@@ -26,7 +82,6 @@ run_test() {
     local expect_success="${3:-true}"
     
     echo -e "${BLUE}Test $test_count: $name${NC}"
-    echo "Command: $cmd"
     
     if eval "$cmd" > /tmp/mementum-test.out 2>&1; then
         if [ "$expect_success" = "true" ]; then
@@ -50,7 +105,7 @@ run_test() {
     echo
 }
 
-TOOL="bb runtime/mementum.clj"
+# --- Tests ---
 
 echo "=== LIST Operations ==="
 run_test "List all memories" "$TOOL '(list)'"
@@ -82,7 +137,6 @@ run_test "Diff HEAD~1 to HEAD" "$TOOL '(diff)'"
 run_test "Diff HEAD~3 to HEAD" "$TOOL '(diff \"HEAD~3\" \"HEAD\")'"
 
 echo "=== CREATE / UPDATE / DELETE Lifecycle ==="
-# Create a test memory, update it, then delete it
 run_test "Create a test memory" "$TOOL '(create 💡 \"integration-test-fixture\" \"This is a test memory for integration testing.\")'"
 run_test "Read the created memory" "$TOOL '(read \"mementum/memories/integration-test-fixture.md\")'"
 run_test "Update the test memory" "$TOOL '(update \"mementum/memories/integration-test-fixture.md\" \"Updated content for integration testing.\")'"
@@ -107,6 +161,8 @@ echo "=== Parse Error Tests ==="
 run_test "Malformed S-expression" "$TOOL '(create 💡 \"test\"'" false
 run_test "Unknown operation" "$TOOL '(unknown \"arg\")'" false
 run_test "Missing parens" "$TOOL 'list'" false
+
+# --- Summary ---
 
 echo "=========================================="
 echo "Test Summary"
