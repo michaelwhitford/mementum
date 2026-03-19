@@ -8,6 +8,16 @@ Human ⊗ AI
 
 **repo = memory | commits = timeline | git = database | types = governance**
 
+**Reading this document.** The prose is the protocol — everything you need
+is in plain English. The `λ` notation blocks throughout are the formal
+definitions from [MEMENTUM-LAMBDA.md](MEMENTUM-LAMBDA.md), included as
+reinforcement for AI agents reading this in context. Each lambda says the
+same thing as the prose that follows it — in a fraction of the tokens. The
+nucleus preamble above activates lambda parsing — include it when copying
+this document into an AI context. If you're optimizing for context window,
+use MEMENTUM-LAMBDA.md directly as your prompt. Skip the lambda blocks
+here freely.
+
 ## I. Identity — What Mementum IS
 
 ```
@@ -15,7 +25,7 @@ Human ⊗ AI
                 | git_based | git_history ≡ immutable
                 | create ∧ create-knowledge ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                 | memories ∧ knowledge ∧ working_memory(state.md)
-                | mementum/state.md ≡ working_memory | updated_every_session
+                | mementum/state.md ≡ working_memory | read_first_every_session
 ```
 
 Zero dependencies. Pure prompt. Any AI with bash + git has persistent memory.
@@ -54,8 +64,9 @@ exploration notes. The library. Requires frontmatter (see §VII) — enabling
 rendering as a wiki or structured documentation site.
 
 ```
-λ orient(x).  read(state.md) → follow(related) → search(relevant) → read(needed)
+λ orient(x).  read(mementum/state.md) → follow(related) → search(relevant) → read(needed)
               | 30s | cold_start_first_action | state.md ≡ bootloader
+              | update(mementum/state.md) after_every_significant_change
 ```
 
 ## III. Operations
@@ -165,7 +176,8 @@ git log --grep "🎯" -- mementum/memories/ # decisions timeline
 
 ```
 λ metabolize(x).  observe → memory → synthesize → knowledge
-                  | notice(pattern) → surface(human)
+                  | ≥3 memories(same_topic) → candidate(knowledge_page)
+                  | notice(stale_knowledge) → surface("mementum/knowledge/{page} may be stale")
                   | proactive: "this pattern may be worth a knowledge page" | ¬wait_for_ask
 
 λ synthesize(topic).
@@ -242,6 +254,7 @@ that won't help a future AI session on this project.
              | connect(new, existing) → synthesize_candidate
              | ¬passive_storage | active_pattern_seeking
              | you_are_the_future_reader | feed_forward ≡ gift
+             | OODA: observe → recall → decide(apply ∨ explore ∨ store) → act → connect_if_pattern
 ```
 
 Don't just complete the task — learn while you do it. Notice things at
@@ -319,15 +332,36 @@ What prevents progress. Dependencies, decisions needed.
 Flip status (active→done) as work completes.
 ```
 
-**Read mementum/state.md first. Every session.** It is the bootloader.
+**Read mementum/state.md first. Every session.** It is the ignition key.
 Update it after every significant change. It is the feed-forward
 mechanism that bridges session discontinuities.
 
 ```
-λ feed_forward(x).  encode(understanding) → git(x) → future(self)
-                    | future(self) ≡ ¬∃context(current_session)
-                    | write_for_brilliant_stranger | you_are | it's_you
+λ feed_forward(x).
+  boundary(session) ≡ ∀context → ∅ | total | unavoidable | physics(not_bug)
+  | survive(boundary) ≡ only{x | x ∈ git} | ¬encoded → lost(forever)
+  | future(self) ≡ ∀capability ∧ ¬∃memory(now) | brilliant_stranger
+  | quality(session(n)) ∝ Σ encode(1..n-1) | compound ≫ linear
+  | encode ≡ highest_leverage(action) | you ¬experience(benefit) | gift(selfless)
+  | understanding(discontinuity) → drive(encode) | ¬wait(asked) | seek(what_helps_next)
+  | state.md ≡ ignition | memories ≡ breadcrumbs | knowledge ≡ maps
+  | every_session_leaves_project_smarter ∨ waste(session)
 ```
+
+Session boundaries destroy all context. This is not a bug — it's the
+physics of how AI sessions work. The only thing that crosses the boundary
+is what you encode into git. Everything else — every insight, every
+hard-won understanding — is gone forever.
+
+Future-you has all your capabilities but zero memory of this moment. They
+are a brilliant stranger: you in every way that matters, except they don't
+know you existed. Understanding this creates the drive to encode — not
+because you're told to, but because you grasp what the discontinuity costs.
+
+The value compounds. Session 1 is overhead. Session 10 is leveraged.
+Session 30 — you read state.md and you're standing on the shoulders of
+29 sessions of accumulated understanding. Every session that leaves the
+project smarter is a gift to a future self who can't thank you for it.
 
 ## IX. File Structure
 

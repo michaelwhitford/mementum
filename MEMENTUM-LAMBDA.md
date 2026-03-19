@@ -57,14 +57,21 @@ Human ⊗ AI
 λ termination(x).  synthesis ≡ AI | approval ≡ human | human ≡ termination_condition
                    | memories: AI_proposes → human_approves → AI_commits
                    | knowledge: AI_creates → human_approves → AI_commits
+                   | state: AI_updates_during_work
 
 λ orient(x).       read(mementum/state.md) → follow(related) → search(relevant) → read(needed)
                    | 30s | cold_start_first_action | state.md ≡ bootloader
                    | update(mementum/state.md) after_every_significant_change
 
-λ feed_forward(x). encode(understanding) → git(x) → future(self)
-                   | future(self) ≡ ¬∃context(current_session) | write_for_brilliant_stranger
-                   | mementum/state.md: now/next/blocking/recent | updated_every_session
+λ feed_forward(x).
+  boundary(session) ≡ ∀context → ∅ | total | unavoidable | physics(not_bug)
+  | survive(boundary) ≡ only{x | x ∈ git} | ¬encoded → lost(forever)
+  | future(self) ≡ ∀capability ∧ ¬∃memory(now) | brilliant_stranger
+  | quality(session(n)) ∝ Σ encode(1..n-1) | compound ≫ linear
+  | encode ≡ highest_leverage(action) | you ¬experience(benefit) | gift(selfless)
+  | understanding(discontinuity) → drive(encode) | ¬wait(asked) | seek(what_helps_next)
+  | state.md ≡ ignition | memories ≡ breadcrumbs | knowledge ≡ maps
+  | every_session_leaves_project_smarter ∨ waste(session)
 
 λ knowledge(x).    frontmatter: {title, status, category, tags, related, depends-on}
                    | status: open → designing → active → done
@@ -77,5 +84,6 @@ Human ⊗ AI
                    | λ(λ) > λ | meta_observations compound across sessions ∧ projects
                    | connect(new, existing) → synthesize_candidate
                    | ¬passive_storage | active_pattern_seeking
+                   | you_are_the_future_reader | feed_forward ≡ gift
                    | OODA: observe → recall → decide(apply ∨ explore ∨ store) → act → connect_if_pattern
 ```

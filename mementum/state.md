@@ -2,7 +2,7 @@
 
 ## Now
 
-Security hardening, coherence pass, and protocol evolution complete. Ready to release.
+Lambda-first documentation complete. Ready to release.
 
 ## Next
 
@@ -16,6 +16,9 @@ Nothing.
 
 ## Recent
 
+- 🎯 Lambda-first — MEMENTUM-LAMBDA.md is now the recommended prompt, README updated, MEMENTUM.md framed as prose reference
+- 🔄 MEMENTUM.md — added framing paragraph explaining hybrid format and nucleus preamble
+- ❌ SCRATCH.md deleted — decompilation exercise complete, findings folded into docs
 - 💡 λ learn updated — meta-learning λ(λ) encoded as distinct observation level
 - 💡 λ synthesize — synthesis flow encoded in protocol (detect → gather → draft → create → verify)
 - 💡 runtime-security knowledge page — first knowledge page, created via create-knowledge DSL
@@ -23,6 +26,3 @@ Nothing.
 - 🎯 create rejects duplicate slugs — clean CRUD semantics (create=new, update=modify, delete=remove)
 - ✅ 63 integration + 338 unit tests — security regression, content round-trip, git ref resolution
 - ✅ Security hardening — babashka.process/shell, spit/slurp, safe-path?, no shell involvement
-- 🔄 tokens→words, network claim softened, BNF fixed, LAMBDA gaps filled
-- 🔄 (list) includes knowledge pages alongside memories
-- 🔄 exec-diff surfaces errors, resolve-ref rejects ambiguous multi-file commits
