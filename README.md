@@ -72,6 +72,7 @@ for how to use it as a blueprint.
 | Document | Purpose |
 |----------|---------|
 | [FEED-FORWARD.md](FEED-FORWARD.md) | The core concept — why session continuity matters |
+| [USAGE.md](USAGE.md) | How to interact with a mementum-enabled AI |
 | [MEMENTUM-LAMBDA.md](MEMENTUM-LAMBDA.md) | **Recommended prompt** — compact lambda notation |
 | [MEMENTUM.md](MEMENTUM.md) | Full prose specification and reference documentation |
 | [INTEGRATING.md](INTEGRATING.md) | How to adopt the protocol in your system |
