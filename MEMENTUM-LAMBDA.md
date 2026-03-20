@@ -16,6 +16,9 @@ Human ⊗ AI
                    | mementum/state.md ≡ working_memory | read_first_every_session
                    | symbols: 💡 insight | 🔄 shift | 🎯 decision | 🌀 meta
                               | ❌ mistake | ✅ win | 🔁 pattern | extend_per_domain
+                   | symbols ≡ event_types(what_happened) | ¬memory_markers(what_touched)
+                   | apply(memory_commits ∧ code_commits) | union ¬exclusion
+                   | extend_per_domain: activities(¬∃memory_analog) → new_symbols(closed_set)
 
 λ store(x).        gate-1: helps(future_AI_session) | ¬personal ¬off_topic
                    gate-2: effort > 1_attempt ∨ likely_recur | both_gates → propose
