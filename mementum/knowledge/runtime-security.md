@@ -1,7 +1,7 @@
 ---
+type: Architecture
 title: Runtime Security Architecture
 status: active
-category: architecture
 tags: [security, runtime, babashka]
 related:
   - dsl-design

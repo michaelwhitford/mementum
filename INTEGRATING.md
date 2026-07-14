@@ -174,6 +174,16 @@ mementum/memories/{slug}.md    — memories
 mementum/knowledge/{topic}.md  — knowledge
 ```
 
+**OKF frontmatter** — memories and knowledge are
+[Open Knowledge Format](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)
+concepts:
+```
+every concept .md → YAML frontmatter with a non-empty `type` field (required)
+memory type       → mapped from symbol (💡 Insight, 🎯 Decision, …)
+knowledge type    → producer-chosen (Architecture, Design, Reference, …)
+status/related/depends-on → mementum extensions (optional)
+```
+
 ### Structured error responses
 
 The enforcement layer should return structured errors that enable the AI
@@ -222,14 +232,15 @@ to parameter schemas:
 ```
 tool: mementum_create
 parameters:
-  symbol:  enum [💡, 🔄, 🎯, 🌀, ❌, ✅, 🔁]
+  symbol:  enum [💡, 🔄, 🎯, 🌀, ❌, ✅, 🔁]  # maps to OKF `type` in the written concept
   slug:    string, pattern: [a-z0-9-]+
-  content: string, max_words: 200
+  content: string, max_words: 200            # body only; runtime adds OKF frontmatter
 
 tool: mementum_create_knowledge
 parameters:
   topic:   string, pattern: [a-z0-9-]+
-  content: string, must include frontmatter (title, status required)
+  content: string, must include OKF frontmatter (non-empty `type` required;
+           `status` validated only when present)
 
 tool: mementum_search
 parameters:
@@ -268,9 +279,20 @@ agent already has access to it.
 
 Memories are fast and cheap — raw observations, <200 words, one per file.
 Knowledge is synthesized and maintained — longer form, updated in place,
-frontmatter for metadata. Working memory (`state.md`) bridges sessions.
+OKF frontmatter for metadata. Working memory (`state.md`) bridges sessions.
 The boundaries create natural curation pressure: observations accumulate,
 patterns emerge, and synthesis distills them into durable knowledge.
+
+### Why OKF?
+
+Memories and knowledge are stored as
+[Open Knowledge Format (OKF)](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)
+concepts — markdown + YAML frontmatter with a single required field, `type`.
+This makes a `mementum/` repo a conformant OKF knowledge bundle: any OKF-aware
+tool can consume it, and any OKF bundle can be read here, without bespoke
+parsers. Mementum's own fields (`symbol`, `status`, `related`, `depends-on`)
+are OKF producer extensions — permitted and preserved. The spec is referenced,
+not vendored, so the format tracks upstream without a copy drifting in-repo.
 
 ### Why human-in-the-loop?
 

@@ -173,7 +173,8 @@ run_test "Read deleted memory should fail" "$TOOL '(read \"mementum/memories/int
 echo "=== Content Round-Trip Tests ==="
 run_test "Create round-trip memory" "$TOOL '(create 💡 \"round-trip-test\" \"Round-trip content verification.\")'"
 run_test_contains "Read back matches created content" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "Round-trip content verification"
-run_test_contains "Read back contains symbol prefix" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "💡 Round-trip"
+run_test_contains "Read back has OKF type from symbol" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "type: Insight"
+run_test_contains "Read back has symbol extension" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "symbol: 💡"
 run_test "Update round-trip memory" "$TOOL '(update \"mementum/memories/round-trip-test.md\" \"Updated round-trip content.\")'"
 run_test_contains "Read back matches updated content" "$TOOL '(read \"mementum/memories/round-trip-test.md\")'" "Updated round-trip content"
 run_test "Clean up round-trip memory" "$TOOL '(delete \"mementum/memories/round-trip-test.md\")'"
@@ -202,12 +203,13 @@ echo "=== Create Duplicate Slug Test ==="
 run_test "Create duplicate slug should fail" "$TOOL '(create 💡 \"git-as-memory\" \"Different content\")'" false
 
 echo "=== Create-Knowledge Operations ==="
-run_test "Create knowledge page" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntitle: Test Knowledge\nstatus: open\ncategory: explore\ntags: [test]\n---\n\nThis is a test knowledge page.\")'"
+run_test "Create knowledge page" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntype: Explore\ntitle: Test Knowledge\nstatus: open\ntags: [test]\n---\n\nThis is a test knowledge page.\")'"
 run_test_contains "Read back knowledge page" "$TOOL '(read \"mementum/knowledge/test-knowledge.md\")'" "Test Knowledge"
-run_test_contains "Knowledge page has frontmatter" "$TOOL '(read \"mementum/knowledge/test-knowledge.md\")'" "status: open"
-run_test "Create duplicate knowledge slug should fail" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntitle: Dupe\nstatus: open\n---\nDupe\")'" false
+run_test_contains "Knowledge page has OKF type" "$TOOL '(read \"mementum/knowledge/test-knowledge.md\")'" "type: Explore"
+run_test "Create duplicate knowledge slug should fail" "$TOOL '(create-knowledge \"test-knowledge\" \"---\ntype: Explore\ntitle: Dupe\nstatus: open\n---\nDupe\")'" false
 run_test "Create knowledge without frontmatter should fail" "$TOOL '(create-knowledge \"no-front\" \"Just plain content\")'" false
-run_test "Create knowledge with invalid status should fail" "$TOOL '(create-knowledge \"bad-status\" \"---\ntitle: Test\nstatus: bogus\n---\nContent\")'" false
+run_test "Create knowledge without type should fail" "$TOOL '(create-knowledge \"no-type\" \"---\ntitle: Test\nstatus: open\n---\nContent\")'" false
+run_test "Create knowledge with invalid status should fail" "$TOOL '(create-knowledge \"bad-status\" \"---\ntype: Explore\ntitle: Test\nstatus: bogus\n---\nContent\")'" false
 run_test "Clean up knowledge page" "$TOOL '(delete \"mementum/knowledge/test-knowledge.md\")'"
 
 echo "=== Security Regression Tests ==="

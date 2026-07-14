@@ -78,8 +78,8 @@ you:  this is worth a knowledge page
 ```
 
 When enough memories cluster around a topic, the AI drafts a knowledge
-page — longer form, with frontmatter, updated in place as understanding
-evolves. You approve the page. The AI may also suggest synthesis
+page — longer form, with OKF frontmatter (required `type`), updated in place
+as understanding evolves. You approve the page. The AI may also suggest synthesis
 proactively when it notices the pattern.
 
 ## Maintenance

@@ -1,1 +1,7 @@
-🔄 Flat S-expression syntax — (operation arg1 arg2 ...) — minimizes entropy in AI-generated commands. Fewer ways to express the same thing means fewer parse failures. Inspired by Nucleus DSL principles: reduced ambiguity, fail-fast validation, structured errors for self-correction. Token-efficient for prompt budgets.
+---
+type: Shift
+symbol: 🔄
+title: dsl-simplification
+---
+
+Flat S-expression syntax — (operation arg1 arg2 ...) — minimizes entropy in AI-generated commands. Fewer ways to express the same thing means fewer parse failures. Inspired by Nucleus DSL principles: reduced ambiguity, fail-fast validation, structured errors for self-correction. Token-efficient for prompt budgets.

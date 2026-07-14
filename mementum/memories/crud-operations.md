@@ -1,1 +1,7 @@
-🎯 Store covers the full file lifecycle: create, update, and delete. All three are governed the same way — AI proposes, human approves, AI commits. Files are mutable because git preserves all history. Update modifies content with a new commit. Delete uses git rm but the file is always recoverable from history. The safety guarantee is structural (git), not policy (append-only).
+---
+type: Decision
+symbol: 🎯
+title: crud-operations
+---
+
+Store covers the full file lifecycle: create, update, and delete. All three are governed the same way — AI proposes, human approves, AI commits. Files are mutable because git preserves all history. Update modifies content with a new commit. Delete uses git rm but the file is always recoverable from history. The safety guarantee is structural (git), not policy (append-only).

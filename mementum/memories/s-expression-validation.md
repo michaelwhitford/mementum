@@ -1,1 +1,7 @@
-💡 S-expressions reduce entropy in AI outputs. Matryoshka showed 7B models handle symbolic grammars better than freeform code. Parser validates before execution preventing runtime errors.
+---
+type: Insight
+symbol: 💡
+title: s-expression-validation
+---
+
+S-expressions reduce entropy in AI outputs. Matryoshka showed 7B models handle symbolic grammars better than freeform code. Parser validates before execution preventing runtime errors.

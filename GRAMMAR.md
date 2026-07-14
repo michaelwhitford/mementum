@@ -75,12 +75,25 @@ The symbol system creates a **natural query language** built into content itself
 **Parameters:**
 - `symbol` - One of: 💡 🔄 🎯 🌀 ❌ ✅ 🔁 (required, extensible per domain)
 - `slug` - Kebab-case identifier: `[a-z0-9-]+` (required)
-- `content` - Memory content, <200 words (required)
+- `content` - Memory body, <200 words (required)
+
+Memories are OKF concepts. The runtime writes an OKF frontmatter block whose
+`type` is mapped from the symbol (💡 Insight, 🔄 Shift, 🎯 Decision, 🌀 Meta,
+❌ Mistake, ✅ Win, 🔁 Pattern) and preserves the emoji as the `symbol`
+extension (for the commit changelog and `git grep`).
 
 **Maps to:**
 ```bash
 file="mementum/memories/${slug}.md"
-echo "${symbol} ${content}" > "${file}"
+cat > "${file}" <<'EOF'
+---
+type: ${TYPE}      # mapped from ${symbol}
+symbol: ${symbol}
+title: ${slug}
+---
+
+${content}
+EOF
 git add "${file}"
 git commit -m "${symbol} ${slug}"
 ```
@@ -100,18 +113,21 @@ git commit -m "${symbol} ${slug}"
 ### 3. CREATE-KNOWLEDGE - Store knowledge page
 
 ```lisp
-(create-knowledge "topic-slug" "---\ntitle: Topic Title\nstatus: open\n---\n\nContent...")
+(create-knowledge "topic-slug" "---\ntype: Reference\ntitle: Topic Title\nstatus: open\n---\n\nContent...")
 ```
 
 **Parameters:**
 - `topic` - Kebab-case identifier: `[a-z0-9-]+` (required)
-- `content` - Full content including frontmatter (required, no word limit)
+- `content` - Full content including OKF frontmatter (required, no word limit)
 
-**Frontmatter requirements:**
+**Frontmatter requirements** (OKF concept — see the
+[OKF spec](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)):
 - Must start with `---` delimiter
-- Must contain `title` field
-- Must contain `status` field: `open | designing | active | done`
-- Optional: `category`, `tags`, `related`, `depends-on`
+- Must contain a non-empty `type` field — the only OKF-required field
+  (e.g. `Architecture`, `Design`, `Reference`, `Playbook`, `Explore`)
+- Recommended (OKF): `title`, `description`, `tags`, `timestamp`
+- Optional (mementum extensions): `status` (`open | designing | active | done`,
+  validated only when present), `related`, `depends-on`
 
 **Maps to:**
 ```bash
@@ -123,8 +139,8 @@ git commit -m "💡 ${topic}"
 
 **Examples:**
 ```lisp
-(create-knowledge "architecture" "---\ntitle: Architecture Overview\nstatus: designing\ncategory: architecture\ntags: [storage, protocol]\n---\n\n# Architecture\n\nThe system uses three storage types...")
-(create-knowledge "shell-safety" "---\ntitle: Shell Safety Patterns\nstatus: active\ncategory: design\n---\n\n# Shell Safety\n\nUse single-quoted heredoc...")
+(create-knowledge "architecture" "---\ntype: Architecture\ntitle: Architecture Overview\nstatus: designing\ntags: [storage, protocol]\n---\n\n# Architecture\n\nThe system uses three storage types...")
+(create-knowledge "shell-safety" "---\ntype: Design\ntitle: Shell Safety Patterns\nstatus: active\n---\n\n# Shell Safety\n\nUse single-quoted heredoc...")
 ```
 
 **Note:** Knowledge pages have no word limit. Rejects if file already exists — use `(update ...)` to modify.
@@ -348,6 +364,11 @@ ls -t mementum/knowledge/
 ;; Symbols (core set — extensible per domain)
 (def symbols #{"💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"})
 
+;; Symbol → OKF type — a memory's event symbol becomes its OKF concept `type`
+(def symbol->type
+  {"💡" "Insight" "🔄" "Shift" "🎯" "Decision" "🌀" "Meta"
+   "❌" "Mistake" "✅" "Win" "🔁" "Pattern"})
+
 ;; Slug (kebab-case)
 (def slug-pattern #"^[a-z0-9-]+$")
 
@@ -355,7 +376,7 @@ ls -t mementum/knowledge/
 (defn valid-content? [s]
   (< (count (re-seq #"\S+" s)) 200))
 
-;; Knowledge page statuses
+;; Knowledge page statuses (mementum extension — optional, validated when present)
 (def valid-statuses #{"open" "designing" "active" "done"})
 
 ;; Fibonacci depths

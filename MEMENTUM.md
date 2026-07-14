@@ -37,6 +37,14 @@ search (semantic), version control (immutable), distribution (push/pull).
 
 Three types of storage, each with its own purpose and governance.
 
+Memories and knowledge are stored as **[Open Knowledge Format (OKF)](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)** concepts:
+every file is a UTF-8 markdown document with a YAML frontmatter block whose
+only required field is `type`. This makes a `mementum/` repo a conformant OKF
+knowledge bundle — any OKF-aware tool can read it, and any OKF bundle can be
+consumed here. Mementum's own fields (`symbol`, `status`, `related`,
+`depends-on`) ride along as OKF producer extensions. See §VII for the concept
+format. The spec is referenced, not vendored — read it at the URL above.
+
 | Type | Path | Purpose | Governance | Token Limit |
 |------|------|---------|------------|-------------|
 | **Working memory** | `state.md` | Operational state, session bootloader | AI updates during work | none |
@@ -55,12 +63,14 @@ Tracks now/next/blocking/recent. Updated by AI during work. The project's
 short-term memory. Read this first on every session start.
 
 **Memories** — `memories/`. Raw observations. One insight per file.
-<200 words (content only — the leading symbol does not count). Editable and deletable — git preserves all history, so nothing
+OKF concepts with a minimal frontmatter (`type` mapped from the event symbol,
+plus the `symbol` emoji as an extension); body <200 words (the frontmatter
+does not count). Editable and deletable — git preserves all history, so nothing
 is truly lost. The compost heap. Fast, cheap, abundant.
 
 **Knowledge** — `knowledge/`. Synthesized documentation. Longer form.
 Updated-in-place as understanding evolves. Architecture docs, design decisions,
-exploration notes. The library. Requires frontmatter (see §VII) — enabling
+exploration notes. The library. Full OKF concept format (see §VII) — enabling
 rendering as a wiki or structured documentation site.
 
 ```
@@ -84,10 +94,21 @@ rendering as a wiki or structured documentation site.
 
 #### Create
 
-**Memories** — fast path, AI proposes to human:
+**Memories** — fast path, AI proposes to human. Write an OKF concept — the
+`type` is mapped from the symbol (💡 Insight, 🔄 Shift, 🎯 Decision, 🌀 Meta,
+❌ Mistake, ✅ Win, 🔁 Pattern), the emoji is preserved as the `symbol`
+extension:
 ```bash
 file="mementum/memories/{slug}.md"
-echo "{symbol} {content}" > "$file"
+cat > "$file" <<'EOF'
+---
+type: {Type}
+symbol: {symbol}
+title: {slug}
+---
+
+{content}
+EOF
 git add "$file" && git commit -m "{symbol} {slug}"
 ```
 
@@ -184,7 +205,7 @@ git log --grep "🎯" -- mementum/memories/ # decisions timeline
   detect: ≥3 memories(topic) ∨ stale(memory) ∨ crystallized(understanding)
   | stale_memory ≡ strongest_signal
   | gather: recall(topic) → collect(memories) ∧ collect(context)
-  | draft: knowledge_page(title, status, related, content)
+  | draft: knowledge_page(type, title?, status?, content)
   | create: (create-knowledge "slug" "frontmatter+content")
   | update: stale(memories) → refresh(current_understanding)
   | verify: (list) → visible(memories ∧ knowledge)
@@ -202,9 +223,10 @@ the human gates.
   form a coherent pattern. The connections between memories are the insight.
 
 **Synthesis flow.** Gather related memories via recall. Draft a knowledge
-page with frontmatter (title, status, related, content). Create via
-`(create-knowledge "topic" "content")` or direct file write. Update any
-stale memories to reflect current understanding. Verify with `(list)`.
+page with OKF frontmatter (`type` required; `title`/`status`/`related`
+optional). Create via `(create-knowledge "topic" "content")` or direct file
+write. Update any stale memories to reflect current understanding. Verify with
+`(list)`.
 
 **Staleness.** Both memories and knowledge pages can drift from reality.
 A stale *knowledge page* needs updating. A stale *memory* signals that
@@ -283,29 +305,68 @@ observe(task ∨ error ∨ difficulty ∨ surprise)
   → store_if_new ∧ connect_if_pattern
 ```
 
-## VII. Knowledge Page Format
+## VII. Concept Format (OKF)
 
-Every knowledge page (`mementum/knowledge/*.md`) requires frontmatter:
+Memories and knowledge pages are **[Open Knowledge Format (OKF)](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)**
+concepts: a UTF-8 markdown file with a YAML frontmatter block whose only
+**required** field is `type`. A concept's ID is its path within the bundle
+with `.md` removed (e.g. `mementum/knowledge/runtime-security.md` →
+`knowledge/runtime-security`). Everything else is optional; consumers must
+tolerate unknown types, missing optional fields, and broken cross-links.
+
+### Knowledge page
 
 ```yaml
 ---
-title: Page Title
-status: open | designing | active | done
-category: architecture | design | explore | experiment
+type: Architecture          # REQUIRED — the OKF concept kind
+title: Page Title           # OKF-recommended
+description: One-line summary # OKF-recommended
+status: open | designing | active | done   # mementum extension
 tags: [relevant, tags]
 related:
-  - other/page        # bidirectional links
+  - other/page              # mementum extension — bidirectional links
 depends-on:
-  - prerequisite/page  # ordering constraints
+  - prerequisite/page       # mementum extension — ordering constraints
 ---
 ```
 
-**Status lifecycle:** `open` → `designing` → `active` → `done`
+`type` replaces the old `category` field. Pick a descriptive, self-explanatory
+value — e.g. `Architecture`, `Design`, `Reference`, `Playbook`, `Explore`,
+`Experiment`. Types are not registered centrally.
+
+**Status lifecycle** (mementum extension): `open` → `designing` → `active` → `done`
 
 - `open` — idea captured, not yet explored
 - `designing` — actively being developed
 - `active` — current, maintained, referenced
 - `done` — complete, stable, archival
+
+### Memory
+
+Memories are lightweight OKF concepts. The event symbol maps to `type`; the
+emoji is preserved as the `symbol` extension for the commit changelog and
+`git grep`:
+
+```yaml
+---
+type: Insight               # REQUIRED — mapped from symbol
+symbol: 💡                  # mementum extension — emoji for changelog + grep
+title: my-slug              # OKF-recommended (slug by default)
+---
+
+Body — one insight, <200 words (frontmatter does not count).
+```
+
+Symbol → type: 💡 Insight · 🔄 Shift · 🎯 Decision · 🌀 Meta · ❌ Mistake ·
+✅ Win · 🔁 Pattern.
+
+### Cross-linking
+
+Relationships between concepts use standard markdown links. Bundle-relative
+links (beginning with `/`, resolved from the repo root) are preferred because
+they survive moves: `See [runtime security](/mementum/knowledge/runtime-security.md).`
+The `related`/`depends-on` frontmatter fields remain as mementum extensions for
+typed edges.
 
 Knowledge pages are AI documentation — written for future AI sessions.
 Longer form than memories. Updated in place as understanding evolves.
@@ -418,7 +479,7 @@ For programmatic use, the runtime provides:
 ```bash
 ./runtime/mementum.clj '(search "query" 5)'
 ./runtime/mementum.clj '(create 💡 "slug" "content")'
-./runtime/mementum.clj '(create-knowledge "topic" "---\ntitle: Topic\nstatus: open\n---\n\nContent")'
+./runtime/mementum.clj '(create-knowledge "topic" "---\ntype: Reference\ntitle: Topic\nstatus: open\n---\n\nContent")'
 ./runtime/mementum.clj '(list 💡)'
 ```
 

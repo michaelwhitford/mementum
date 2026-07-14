@@ -15,6 +15,7 @@ Mementum defines how AI agents store, recall, and synthesize knowledge
 across session boundaries using git as the memory substrate.
 
 - **Three storage types** — working memory (`state.md`), memories (raw observations, <200 words), and knowledge (synthesized documentation)
+- **[OKF](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)-native** — memories and knowledge are Open Knowledge Format concepts (markdown + frontmatter, required `type`), so a `mementum/` repo is a portable, interoperable knowledge bundle
 - **Seven operations** — create, create-knowledge, update, delete, search, read, synthesize
 - **Human governance** — AI proposes, human approves, AI commits
 - **Git-native** — `git log` for temporal search, `git grep` for semantic search, commit history for immutability

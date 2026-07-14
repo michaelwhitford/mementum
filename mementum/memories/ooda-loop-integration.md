@@ -1,1 +1,7 @@
-🌀 MEMENTUM follows OODA: observe errors/difficulty, orient via recall, decide to apply or debug, act, then store if novel. Continuous learning cycle.
+---
+type: Meta
+symbol: 🌀
+title: ooda-loop-integration
+---
+
+MEMENTUM follows OODA: observe errors/difficulty, orient via recall, decide to apply or debug, act, then store if novel. Continuous learning cycle.

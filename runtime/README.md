@@ -60,14 +60,20 @@ Symbols act as content-based filters:
 ./runtime/mementum.clj '(create ❌ "shell-bug" "Unescaped content caused commit failures")'
 ```
 
-Creates `mementum/memories/{slug}.md` and commits. Rejects if file already exists.
+Creates `mementum/memories/{slug}.md` as an OKF concept and commits. The runtime
+writes an OKF frontmatter block whose `type` is mapped from the symbol
+(💡 Insight, 🔄 Shift, 🎯 Decision, 🌀 Meta, ❌ Mistake, ✅ Win, 🔁 Pattern),
+keeping the emoji as the `symbol` extension. Rejects if file already exists.
 
 #### CREATE-KNOWLEDGE — Store knowledge page
 ```bash
-./runtime/mementum.clj '(create-knowledge "architecture" "---\ntitle: Architecture\nstatus: open\n---\n\nContent...")'
+./runtime/mementum.clj '(create-knowledge "architecture" "---\ntype: Architecture\ntitle: Architecture\nstatus: open\n---\n\nContent...")'
 ```
 
-Creates `mementum/knowledge/{topic}.md` and commits. Validates frontmatter (title and status required, status must be `open | designing | active | done`). No word limit. Rejects if file already exists.
+Creates `mementum/knowledge/{topic}.md` and commits. Validates OKF frontmatter:
+a non-empty `type` field is required (the only OKF-required field); `status`, if
+present, must be `open | designing | active | done`. No word limit. Rejects if
+file already exists.
 
 #### READ — Read file or reference
 ```bash
@@ -156,11 +162,19 @@ Three modes: no args (all memories), symbol (grep content), path (ls directory).
 ### Symbols (core set — extensible per domain)
 `💡` insight · `🔄` shift · `🎯` decision · `🌀` meta · `❌` mistake · `✅` win · `🔁` pattern
 
+### OKF concepts
+Memories and knowledge are [Open Knowledge Format](https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/refs/heads/main/okf/SPEC.md)
+concepts — markdown with a YAML frontmatter block whose only required field is
+`type`. Memory `type` is mapped from the symbol (💡 Insight · 🔄 Shift ·
+🎯 Decision · 🌀 Meta · ❌ Mistake · ✅ Win · 🔁 Pattern); knowledge `type` is
+producer-chosen (`Architecture`, `Design`, `Reference`, `Playbook`, …). `status`
+is a mementum extension, validated only when present.
+
 ### Slugs
 Lowercase letters, numbers, hyphens: `[a-z0-9-]+`
 
 ### Content
-Memories: < 200 whitespace-separated words. Knowledge pages: no limit.
+Memories: body < 200 whitespace-separated words (frontmatter excluded). Knowledge pages: no limit.
 
 ### Fibonacci Depths
 `1, 2, 3, 5, 8, 13, 21, 34` — used in SEARCH and HISTORY.

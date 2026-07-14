@@ -1,7 +1,7 @@
 ---
+type: Reference
 title: Fulcro — VSM Lambda Document
 status: active
-category: upstream
 tags: [fulcro, clojure, clojurescript, vsm, lambda, generated, upstream]
 ---
 

@@ -233,18 +233,28 @@
       (is (not (:valid result)))
       (is (:error result)))))
 
-(def valid-frontmatter "---\ntitle: Test Topic\nstatus: open\ncategory: explore\ntags: [test]\n---\n\nContent here.")
+(def valid-frontmatter "---\ntype: Reference\ntitle: Test Topic\nstatus: open\ntags: [test]\n---\n\nContent here.")
 
 (deftest validate-create-knowledge-operation
-  (testing "Valid create-knowledge"
+  (testing "Valid create-knowledge (OKF: type required)"
     (let [result (validate-create-knowledge ["test-topic" valid-frontmatter])]
       (is (:valid result))
       (is (= "test-topic" (:topic result)))
       (is (= valid-frontmatter (:content result)))))
 
-  (testing "Valid with all statuses"
+  (testing "Valid with only the required type field (status/title optional)"
+    (let [result (validate-create-knowledge ["topic" "---\ntype: Reference\n---\n\nContent"])]
+      (is (:valid result))))
+
+  (testing "Valid with any OKF type value (types are not registered centrally)"
+    (doseq [t ["Architecture" "Reference" "Playbook" "Design" "Explore" "BigQuery Table"]]
+      (let [content (str "---\ntype: " t "\n---\n\nContent")
+            result (validate-create-knowledge ["topic" content])]
+        (is (:valid result) (str "should be valid for type: " t)))))
+
+  (testing "Valid with all statuses (status is an optional extension)"
     (doseq [status ["open" "designing" "active" "done"]]
-      (let [content (str "---\ntitle: Test\nstatus: " status "\n---\n\nContent")
+      (let [content (str "---\ntype: Reference\nstatus: " status "\n---\n\nContent")
             result (validate-create-knowledge ["topic" content])]
         (is (:valid result) (str "should be valid for status: " status)))))
 
@@ -265,28 +275,44 @@
       (is (= "constraint-violation" (:error result)))
       (is (= :frontmatter (:field result)))))
 
-  (testing "Invalid: missing title in frontmatter"
-    (let [result (validate-create-knowledge ["topic" "---\nstatus: open\n---\nContent"])]
+  (testing "Invalid: missing type in frontmatter (OKF required field)"
+    (let [result (validate-create-knowledge ["topic" "---\ntitle: Test\nstatus: open\n---\nContent"])]
       (is (not (:valid result)))
-      (is (= :frontmatter (:field result)))
-      (is (str/includes? (str (:value result)) "title"))))
+      (is (= :type (:field result)))
+      (is (str/includes? (str (:value result)) "type"))))
 
-  (testing "Invalid: missing status in frontmatter"
-    (let [result (validate-create-knowledge ["topic" "---\ntitle: Test\n---\nContent"])]
-      (is (not (:valid result)))
-      (is (= :frontmatter (:field result)))
-      (is (str/includes? (str (:value result)) "status"))))
+  (testing "Valid: title omitted (OKF-recommended but optional)"
+    (let [result (validate-create-knowledge ["topic" "---\ntype: Reference\n---\nContent"])]
+      (is (:valid result))))
 
-  (testing "Invalid: bad status value"
-    (let [result (validate-create-knowledge ["topic" "---\ntitle: Test\nstatus: bogus\n---\nContent"])]
+  (testing "Valid: status omitted (mementum extension, optional)"
+    (let [result (validate-create-knowledge ["topic" "---\ntype: Reference\ntitle: Test\n---\nContent"])]
+      (is (:valid result))))
+
+  (testing "Invalid: bad status value (validated only when present)"
+    (let [result (validate-create-knowledge ["topic" "---\ntype: Reference\nstatus: bogus\n---\nContent"])]
       (is (not (:valid result)))
       (is (= "constraint-violation" (:error result)))
       (is (= :status (:field result)))))
 
   (testing "No word limit for knowledge pages"
-    (let [long-content (str "---\ntitle: Test\nstatus: open\n---\n\n" (str/join " " (repeat 500 "word")))
+    (let [long-content (str "---\ntype: Reference\nstatus: open\n---\n\n" (str/join " " (repeat 500 "word")))
           result (validate-create-knowledge ["topic" long-content])]
       (is (:valid result)))))
+
+(deftest symbol-to-type-mapping
+  (testing "Every core symbol maps to an OKF type"
+    (doseq [sym ["💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"]]
+      (is (contains? symbol->type sym) (str sym " should map to a type"))
+      (is (not (str/blank? (get symbol->type sym))))))
+
+  (testing "Memory frontmatter is OKF-conformant (non-empty type + symbol)"
+    (let [fm-block (memory-frontmatter "💡" "fibonacci-recall")
+          fm (parse-frontmatter fm-block)]
+      (is (str/starts-with? fm-block "---"))
+      (is (= "Insight" (get fm "type")))
+      (is (= "💡" (get fm "symbol")))
+      (is (= "fibonacci-recall" (get fm "title"))))))
 
 (deftest validate-read-operation
   (testing "Valid read with mementum path"
@@ -453,7 +479,7 @@
         (is (= sym (get-in validation [:params :symbol]))))))
   
   (testing "Validate parsed create-knowledge"
-    (let [parse-result (parse "(create-knowledge \"my-topic\" \"---\\ntitle: My Topic\\nstatus: open\\n---\\n\\nContent\")")
+    (let [parse-result (parse "(create-knowledge \"my-topic\" \"---\\ntype: Reference\\ntitle: My Topic\\nstatus: open\\n---\\n\\nContent\")")
           validation (validate (:ast parse-result))]
       (is (:success validation))
       (is (= "create-knowledge" (:op validation)))

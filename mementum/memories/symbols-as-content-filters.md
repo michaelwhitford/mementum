@@ -1,1 +1,7 @@
-💡 Symbols act as content-based search filters rather than path restrictions. git grep searches entire repo, symbols naturally scope results. Enables flexible querying: broad search, memory-only, or type-specific. If symbols appear in code comments, they become searchable metadata.
+---
+type: Insight
+symbol: 💡
+title: symbols-as-content-filters
+---
+
+Symbols act as content-based search filters rather than path restrictions. git grep searches entire repo, symbols naturally scope results. Enables flexible querying: broad search, memory-only, or type-specific. If symbols appear in code comments, they become searchable metadata.

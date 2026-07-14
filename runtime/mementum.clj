@@ -15,6 +15,18 @@
 
 (def symbols #{"💡" "🔄" "🎯" "🌀" "❌" "✅" "🔁"})
 
+;; Symbol → OKF `type`. Symbols are event-types; OKF concepts require a `type`
+;; field. A memory's leading symbol maps to a human-readable OKF type while the
+;; emoji is preserved as the `symbol:` extension (commit changelog + grep filter).
+(def symbol->type
+  {"💡" "Insight"
+   "🔄" "Shift"
+   "🎯" "Decision"
+   "🌀" "Meta"
+   "❌" "Mistake"
+   "✅" "Win"
+   "🔁" "Pattern"})
+
 (def fibonacci-depths #{1 2 3 5 8 13 21 34})
 
 (def slug-pattern #"^[a-z0-9-]+$")
@@ -32,10 +44,24 @@
   [s]
   (count (re-seq #"\S+" s)))
 
+(defn content-body
+  "Return the markdown body after a leading YAML frontmatter block.
+   If no frontmatter is present, returns the content unchanged. Used so the
+   <200 word memory limit measures the body, not the OKF frontmatter."
+  [content]
+  (let [t (str/trim content)]
+    (if (str/starts-with? t "---")
+      (let [parts (str/split t #"(?m)^---[ \t]*$" 3)]
+        (if (>= (count parts) 3)
+          (str/trim (nth parts 2))
+          content))
+      content)))
+
 (defn valid-content?
-  "Check if content is under 200 words (whitespace-separated)"
+  "Check if the memory body is under 200 words (whitespace-separated).
+   Counts the body only — OKF frontmatter does not count against the limit."
   [s]
-  (< (token-count s) 200))
+  (< (token-count (content-body s)) 200))
 
 (defn run-git
   "Execute git command with array args — no shell interpolation.
@@ -362,60 +388,60 @@
 
 (defn validate-create-knowledge
   "Validate create-knowledge operation.
-   Requires topic slug and content with valid frontmatter."
+   Knowledge pages are OKF concepts: content must carry a YAML frontmatter
+   block with a non-empty `type` field (the only OKF-required field).
+   Mementum extensions (`status`, `title`, `tags`, `related`, `depends-on`)
+   are optional; `status`, when present, must be a valid lifecycle value."
   [args]
-  (cond
-    (< (count args) 2)
-    {:error "create-knowledge requires topic and content"
-     :suggestion "(create-knowledge \"topic\" \"---\\ntitle: Topic\\nstatus: open\\n---\\n\\nContent\")"}
+  (let [fm (when (>= (count args) 2) (parse-frontmatter (second args)))
+        type-val (some-> fm (get "type") str/trim)
+        status-val (some-> fm (get "status") str/trim)]
+    (cond
+      (< (count args) 2)
+      {:error "create-knowledge requires topic and content"
+       :suggestion "(create-knowledge \"topic\" \"---\\ntype: Reference\\ntitle: Topic\\n---\\n\\nContent\")"}
 
-    (not (string? (first args)))
-    {:error "topic must be a string"
-     :suggestion "(create-knowledge \"topic\" \"content\")"}
+      (not (string? (first args)))
+      {:error "topic must be a string"
+       :suggestion "(create-knowledge \"topic\" \"content\")"}
 
-    (not (re-matches slug-pattern (first args)))
-    {:error "constraint-violation"
-     :field :topic
-     :value (first args)
-     :expected "lowercase letters, numbers, and hyphens only"
-     :suggestion "(create-knowledge \"my-topic\" \"content\")"}
+      (not (re-matches slug-pattern (first args)))
+      {:error "constraint-violation"
+       :field :topic
+       :value (first args)
+       :expected "lowercase letters, numbers, and hyphens only"
+       :suggestion "(create-knowledge \"my-topic\" \"content\")"}
 
-    (not (string? (second args)))
-    {:error "content must be a string"
-     :suggestion "(create-knowledge \"topic\" \"content\")"}
+      (not (string? (second args)))
+      {:error "content must be a string"
+       :suggestion "(create-knowledge \"topic\" \"content\")"}
 
-    (nil? (parse-frontmatter (second args)))
-    {:error "constraint-violation"
-     :field :frontmatter
-     :value "missing or malformed"
-     :expected "Content must start with --- frontmatter block containing title and status"
-     :suggestion "(create-knowledge \"topic\" \"---\\ntitle: My Topic\\nstatus: open\\n---\\n\\nContent\")"}
+      (nil? fm)
+      {:error "constraint-violation"
+       :field :frontmatter
+       :value "missing or malformed"
+       :expected "Content must start with an OKF --- frontmatter block containing a type field"
+       :suggestion "(create-knowledge \"topic\" \"---\\ntype: Reference\\ntitle: My Topic\\n---\\n\\nContent\")"}
 
-    (nil? (get (parse-frontmatter (second args)) "title"))
-    {:error "constraint-violation"
-     :field :frontmatter
-     :value "missing title"
-     :expected "Frontmatter must contain title field"
-     :suggestion "Add 'title: My Title' to frontmatter"}
+      (str/blank? (str type-val))
+      {:error "constraint-violation"
+       :field :type
+       :value "missing type"
+       :expected "OKF frontmatter must contain a non-empty type field"
+       :suggestion "Add 'type: Reference' (or Architecture, Playbook, Design, …) to frontmatter"}
 
-    (nil? (get (parse-frontmatter (second args)) "status"))
-    {:error "constraint-violation"
-     :field :frontmatter
-     :value "missing status"
-     :expected "Frontmatter must contain status field"
-     :suggestion "Add 'status: open' to frontmatter"}
+      (and status-val
+           (not (contains? valid-statuses status-val)))
+      {:error "constraint-violation"
+       :field :status
+       :value (get fm "status")
+       :expected (str "one of: " (sort valid-statuses))
+       :suggestion "Use status: open | designing | active | done (status is an optional extension)"}
 
-    (not (contains? valid-statuses (str/trim (get (parse-frontmatter (second args)) "status"))))
-    {:error "constraint-violation"
-     :field :status
-     :value (get (parse-frontmatter (second args)) "status")
-     :expected (str "one of: " (sort valid-statuses))
-     :suggestion "Use status: open | designing | active | done"}
-
-    :else
-    {:valid true
-     :topic (first args)
-     :content (second args)}))
+      :else
+      {:valid true
+       :topic (first args)
+       :content (second args)})))
 
 (defn validate-read
   "Validate read operation"
@@ -636,12 +662,24 @@
               :semantic (or (:stdout grep-result) "")}
      :depth depth}))
 
+(defn memory-frontmatter
+  "Build an OKF-conformant frontmatter block for a memory concept.
+   `type` is the required OKF field (mapped from the event symbol); the emoji
+   is preserved as the `symbol:` extension for the git changelog and grep."
+  [symbol slug]
+  (str "---\n"
+       "type: " (get symbol->type symbol "Memory") "\n"
+       "symbol: " symbol "\n"
+       "title: " slug "\n"
+       "---\n\n"))
+
 (defn exec-create
-  "Execute create operation — uses spit for file writes, no shell"
+  "Execute create operation — uses spit for file writes, no shell.
+   Writes an OKF concept: frontmatter (type from symbol) + markdown body."
   [{:keys [symbol slug content]}]
   (let [dir "mementum/memories"
         filepath (str dir "/" slug ".md")
-        file-content (str symbol " " content)]
+        file-content (str (memory-frontmatter symbol slug) (str/trim content) "\n")]
     (if (.exists (io/file filepath))
       {:success false
        :error "file-already-exists"
