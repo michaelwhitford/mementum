@@ -80,6 +80,21 @@ A `mementum/` bundle is OKF-conformant when:
 Everything else is soft: consumers tolerate unknown types, missing optional
 fields, unknown keys, and broken cross-links.
 
+## Bundle Declaration & Scope
+
+The `mementum/` bundle declares its OKF version in a bundle-root
+`mementum/index.md` — `okf_version: "0.1"` in frontmatter (the one place OKF
+permits frontmatter in an index file, §11). Per §9 a bundle is conformant
+*without* any declaration; the declaration only makes the version
+machine-discoverable.
+
+The declaration is **bundle-scoped**, never project-scoped. Mementum is a
+bounded guest: everything it owns is under `mementum/`, and the exported prompt
+claims only that the *bundle* is OKF-conformant — never the host project. In an
+adopting repo, `mementum/ ⊊ host`. (The reflexive fact that *this* repo's
+declaration sits inside the bundle it declares is a property of the reference
+repo — see [self-hosting](/mementum/knowledge/self-hosting.md).)
+
 ## Cross-linking
 
 Relationships use standard markdown links. Bundle-relative links (leading `/`,

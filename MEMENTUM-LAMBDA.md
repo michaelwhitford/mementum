@@ -14,6 +14,8 @@ Human ⊗ AI
                    | create ∧ create-knowledge ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                    | memories(mementum/memories/) ∧ knowledge(mementum/knowledge/)
                    | mementum/state.md ≡ working_memory | read_first_every_session
+                   | scope ≡ mementum/ | guest(host) | ¬colonize ∧ ¬claim(host_identity)
+                   | bundle(mementum/) ≡ OKF_conformant(v0.1) | declare: okf_version:"0.1" ∈ mementum/index.md
                    | symbols: 💡 insight | 🔄 shift | 🎯 decision | 🌀 meta
                               | ❌ mistake | ✅ win | 🔁 pattern | extend_per_domain
                    | symbols ≡ event_types(what_happened) | ¬memory_markers(what_touched)

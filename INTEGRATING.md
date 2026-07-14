@@ -65,9 +65,29 @@ If the project doesn't have a `mementum/` directory yet, create it:
 
 ```
 mementum/
+├── index.md          # OKF bundle root — declares okf_version: "0.1"; progressive-disclosure listing
 ├── state.md          # Working memory — create with now/next/blocking/recent sections
 ├── memories/         # Raw observations, one per file
 └── knowledge/        # Synthesized documentation
+```
+
+Mementum is a **bounded guest**: everything it owns lives under `mementum/`. It
+never claims the host project's identity — in your project `mementum/` is a
+subtree that provides memory, not the project itself.
+
+The `mementum/` bundle is a conformant **OKF v0.1** knowledge bundle. Create
+`mementum/index.md` declaring the version (this is the one place OKF permits
+frontmatter in an index file):
+
+```markdown
+---
+okf_version: "0.1"
+---
+
+# <Project> Knowledge Bundle
+
+## Knowledge
+* [Title](knowledge/topic.md) - one-line description
 ```
 
 Initialize `state.md` with the current project context. This is the first
@@ -182,6 +202,7 @@ every concept .md → YAML frontmatter with a non-empty `type` field (required)
 memory type       → mapped from symbol (💡 Insight, 🎯 Decision, …)
 knowledge type    → producer-chosen (Architecture, Design, Reference, …)
 status/related/depends-on → mementum extensions (optional)
+bundle root       → mementum/index.md declares okf_version: "0.1"
 ```
 
 ### Structured error responses

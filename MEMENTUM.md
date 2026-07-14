@@ -26,9 +26,17 @@ here freely.
                 | create ∧ create-knowledge ∧ update ∧ delete ∧ search ∧ read ∧ synthesize ≡ operations
                 | memories ∧ knowledge ∧ working_memory(state.md)
                 | mementum/state.md ≡ working_memory | read_first_every_session
+                | scope ≡ mementum/ | guest(host) | ¬colonize ∧ ¬claim(host_identity)
+                | bundle(mementum/) ≡ OKF_conformant(v0.1) | declare: okf_version:"0.1" ∈ mementum/index.md
 ```
 
 Zero dependencies. Pure prompt. Any AI with bash + git has persistent memory.
+
+Mementum is a **bounded guest**: it lives entirely under `mementum/` and never
+claims the host project's identity — in an adopting project `mementum/` is a
+subtree, not the project. The `mementum/` bundle is a conformant **OKF v0.1**
+knowledge bundle and declares `okf_version: "0.1"` in its root
+`mementum/index.md`.
 
 Git is already a perfect memory system: history graph (temporal), content
 search (semantic), version control (immutable), distribution (push/pull).
