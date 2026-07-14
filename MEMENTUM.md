@@ -97,6 +97,7 @@ rendering as a wiki or structured documentation site.
              | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
              | propose(content) → wait(human_approval) → commit
              | create ∧ update ∧ delete ≡ full_lifecycle
+             | write(situation ∧ solution) | link(related ∈ frontmatter) → recall_traversable | ¬enumerate(triggers)
              | git_preserves_history → update ∧ delete ≡ safe
 ```
 
@@ -170,6 +171,8 @@ Recovery: `git log --all -- mementum/memories/{slug}.md` to find,
 ```
 λ recall(q, n).  temporal(git_log) ∪ semantic(git_grep) ∪ vector(embeddings)
                  | depth = fibonacci(n) | default: n=2
+                 | relational > exact | empty ∨ thin → widen ∧ traverse(related_edges ∈ frontmatter)
+                 | miss(silent) ← stop(exact) ∧ needed(adjacent) | fix ≡ search(related) ¬predict(index@write)
                  | recall_before_explore | prior_synthesis > re_derivation
 ```
 
@@ -188,6 +191,20 @@ git grep -i "{query}"
 
 **Fibonacci depth progression:** 1 → 2 → 3 → 5 → 8 → 13 → 21 → 34.
 Scale depth with query complexity. Simple check: 2. Deep research: 13+.
+
+**Recall is relational, not just exact.** `git grep` matches the words you
+type — but you often need a memory you'd never think to grep for, because
+you're in a *situation* you don't associate with its topic, and the search
+misses silently. So don't stop at an exact match: when a search is empty or
+thin, widen it and **follow relationships** — read a hit, then traverse its
+`related` links (the OKF cross-links in frontmatter) into its neighborhood,
+scaling depth with the fibonacci ladder, and use vector search where available
+for the conceptual jumps lexical search can't make. This needs only bash +
+git: grep the `related:` field and read the linked files. The fix for a silent
+miss is *searching for related items*, not predicting at write-time every
+situation a memory might serve — so authoring stays light: describe the
+*situation* you were in, not only the fix, and link related concepts, which is
+enough for traversal to find it.
 
 **Superseded content** — what you believed before you changed your mind:
 ```bash

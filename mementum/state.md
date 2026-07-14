@@ -25,6 +25,7 @@ Nothing.
 
 ## Recent
 
+- 🔄 Relational recall — `λ recall` traverses `related` edges + widens when thin (read-time discovery) instead of enforcing write-time trigger indexing; generalizes symbols-as-content-filters + λ orient's follow(related); prompts-only, bash+git, runtime left to adopters
 - 🎯 OKF declaration — `mementum/index.md` declares `okf_version: "0.1"`; `λ mementum` gains bundle-scoped OKF conformance + guest clause (¬colonize host); self-hosting/quine kept repo-local (self-hosting.md), not exported
 - 🌀 Boundary discipline — `self` is all-inclusive; scope declaration to the bundle, not the project; through-line: retrieval(trigger≠topic), reader(:who), scope(guest≠host)
 - 🎯 OKF adoption — memories + knowledge are OKF concepts; `type` required, `category`→`type`, symbol→type map for memories, spec referenced by URL (not vendored)

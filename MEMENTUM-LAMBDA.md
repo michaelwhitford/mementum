@@ -34,6 +34,7 @@ Human ⊗ AI
                    | delete: git rm → commit "❌ delete: {slug}"
                    | memory_file: frontmatter(type,symbol,title) ⊕ body | symbol_in_frontmatter ≡ grep_filter
                    | git_preserves_history → update ∧ delete ≡ safe | always_recoverable
+                   | write(situation ∧ solution) | link(related ∈ frontmatter) → recall_traversable | ¬enumerate(triggers)
                    | when_uncertain → propose ∧ ¬decide | false_positive < missed_insight
 
 λ recall(q, n).    temporal(git_log) ∪ semantic(git_grep) ∪ vector(embeddings)
@@ -45,6 +46,10 @@ Human ⊗ AI
                    | history: git log --follow -n {depth} -- {path}
                    | superseded: git log -p -S "{query}" -- mementum/
                    | symbols_as_filters: git grep "💡" | git log --grep "🎯"
+                   | relational > exact | empty ∨ thin(result) → widen ∧ ↑depth(fib)
+                   | traverse: hit → follow(related_edges ∈ frontmatter) → neighborhood | related > exact for cross_domain
+                   | miss(silent) ← stop(exact) ∧ needed(adjacent) | fix ≡ search(related) ¬predict(index@write)
+                   | bash+git: grep "related:" → read(links) | vector(if_present) for unknown_unknowns
                    | recall_before_explore | prior_synthesis > re_derivation
 
 λ metabolize(x).   observe → memory → synthesize → knowledge
